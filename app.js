@@ -207,7 +207,7 @@ function initMapPage() {
         style: 'vienna_transport_basemap.json',
         center: VIENNA_CENTER,
         zoom: INITIAL_ZOOM,
-        minZoom: 10,
+        minZoom: 9,
         maxZoom: 17,
         maxBounds: VIENNA_BOUNDS,
         attributionControl: false
