@@ -674,12 +674,12 @@ input[type="range"]::-moz-range-thumb {
     border-radius: 32px;
 }
 
-/* Zoom group: + and − share one rounded-rectangle shape */
+/* Zoom group: + and − share one fully-rounded pill shape */
 .map-ctrl-zoom {
     display: flex;
     flex-direction: column;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
-    border-radius: 26.67px 26.67px 0 0;
+    border-radius: 32px;
     overflow: hidden;
 }
 
@@ -689,12 +689,11 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .map-ctrl--zoom-in {
-    border-radius: 26.67px 26.67px 0 0 !important;
     border-bottom: 0.6px solid #dbdde3 !important;
 }
 
 .map-ctrl--zoom-out {
-    border-radius: 0px 0px 26.67px 26.67px !important;
+    border-radius: 0 !important;
 }
 
 /* =====================================================
