@@ -57,7 +57,7 @@
             <!-- Header: MapLens logo + collapse icon -->
             <div class="sim-panel__header">
                 <div class="sim-panel__logo">
-                    <span class="sim-panel__logo-text">Seeing the lines</span>
+                    <span class="sim-panel__logo-text">Seeing the Lines</span>
                 </div>
                 <button class="sim-panel__collapse" id="simulator-collapse" aria-label="Toggle panel"
                     aria-expanded="true">
@@ -87,13 +87,13 @@
                     <p class="sim-desc">How colour vision deficiency affects readability of the U-Bahn network map.</p>
                     <p class="sim-label">Deficiency type</p>
                     <div class="seg-tabs" role="radiogroup" aria-label="Select deficiency type">
-                        <button class="seg-tab" data-cvd-type="normal" role="radio" aria-checked="false">Normal</button>
+                        <button class="seg-tab active" data-cvd-type="normal" role="radio" aria-checked="true">Normal</button>
                         <span class="seg-divider"></span>
                         <button class="seg-tab" data-cvd-type="protanopia" role="radio"
                             aria-checked="false">Protan</button>
                         <span class="seg-divider"></span>
-                        <button class="seg-tab active" data-cvd-type="deuteranopia" role="radio"
-                            aria-checked="true">Deutan</button>
+                        <button class="seg-tab" data-cvd-type="deuteranopia" role="radio"
+                            aria-checked="false">Deutan</button>
                         <span class="seg-divider"></span>
                         <button class="seg-tab" data-cvd-type="tritanopia" role="radio"
                             aria-checked="false">Tritan</button>
@@ -116,9 +116,7 @@
 
                 <!-- CVD info box -->
                 <div id="cvd-info-box" class="cvd-info-box" aria-live="polite" role="status">
-                    <span class="cvd-info-box__title">Deuteranopia:&nbsp;</span>Difficulty telling red and green colours
-                    apart. Reds may appear brighter due to missing M-cones. Most common type of colour blindness.
-                    Affects ~1.2% of men.
+                    <span class="cvd-info-box__title">Normal vision:</span> Colours appear clear and easy to distinguish on the map.
                 </div>
 
             </div>
@@ -184,7 +182,7 @@
 
         <!-- ===== Legend pill (bottom-center) ===== -->
         <!-- Pattern: [orig square] — [sim square] Label (5 U-Bahn lines from GeoJSON) -->
-        <div class="legend-bar" id="legend-bar">
+        <div class="legend-bar legend-bar--normal" id="legend-bar">
 
             <div class="legend-bar__item">
                 <span class="legend-bar__orig" style="background:#e8383a;"></span>

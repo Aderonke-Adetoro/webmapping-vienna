@@ -407,6 +407,15 @@ function initMapPage() {
 
     function initCVDToggles() {
         const toggleButtons = document.querySelectorAll('.seg-tab');
+        const tabsContainer = document.querySelector('.seg-tabs');
+
+        function slideToTab(activeBtn) {
+            if (!tabsContainer || !activeBtn) return;
+            const containerRect = tabsContainer.getBoundingClientRect();
+            const btnRect = activeBtn.getBoundingClientRect();
+            tabsContainer.style.setProperty('--tab-width', btnRect.width + 'px');
+            tabsContainer.style.setProperty('--tab-offset', (btnRect.left - containerRect.left - 2) + 'px');
+        }
 
         toggleButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -431,12 +440,22 @@ function initMapPage() {
                     activeBtn.setAttribute('aria-checked', 'true');
                 }
 
+                slideToTab(activeBtn);
                 updateSVGFilter(currentCVDType, currentSeverity);
                 applyFilterToMap(currentCVDType);
                 updateLegend(currentCVDType, currentSeverity);
                 updateCVDInfoBox(currentCVDType);
                 updateSliderVisibility(currentCVDType);
             });
+        });
+
+        // Position pill on load without animating from 0
+        const initialActive = document.querySelector('.seg-tab.active');
+        requestAnimationFrame(() => {
+            if (tabsContainer) tabsContainer.style.setProperty('--no-transition', '1');
+            slideToTab(initialActive);
+            // Re-enable transition after the first paint
+            requestAnimationFrame(() => tabsContainer && tabsContainer.style.removeProperty('--no-transition'));
         });
     }
 
@@ -464,8 +483,10 @@ function initMapPage() {
 
     function updateSliderVisibility(cvdType) {
         const sliderGroup = document.querySelector('.sim-group--severity');
-        if (!sliderGroup) return;
-        sliderGroup.style.display = cvdType === 'normal' ? 'none' : '';
+        const legendBar = document.getElementById('legend-bar');
+        const isNormal = cvdType === 'normal';
+        if (sliderGroup) sliderGroup.style.display = isNormal ? 'none' : '';
+        if (legendBar) legendBar.classList.toggle('legend-bar--normal', isNormal);
     }
 
     function updateLegend(cvdType, severity) {
@@ -528,13 +549,14 @@ function initMapPage() {
     initPanelCollapse();
     initMapControls(map);
 
-    // Default: deuteranopia at 50% (matches Figma)
-    currentCVDType = 'deuteranopia';
+    // Default: normal vision (no simulation)
+    currentCVDType = 'normal';
     currentSeverity = 0.5;
-    updateSVGFilter('deuteranopia', 0.5);
-    applyFilterToMap('deuteranopia');
-    updateCVDInfoBox('deuteranopia');
-    updateLegend('deuteranopia', 0.5);
+    updateSVGFilter('normal', 0.5);
+    applyFilterToMap('normal');
+    updateCVDInfoBox('normal');
+    updateLegend('normal', 0.5);
+    updateSliderVisibility('normal');
 }
 
 

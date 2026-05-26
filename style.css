@@ -398,7 +398,7 @@ p {
 }
 
 .sim-panel__logo-text {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     font-weight: 500;
     line-height: 16px;
@@ -472,6 +472,7 @@ p {
    Dividers between tabs: 1px #dbdde3 line
    ===================================================== */
 .seg-tabs {
+    position: relative;
     display: flex;
     align-items: center;
     background: #ebedf0;
@@ -480,7 +481,32 @@ p {
     gap: 0;
 }
 
+/* Sliding pill — moves via CSS custom props set from JS */
+.seg-tabs::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    height: calc(100% - 4px);
+    width: var(--tab-width, 0px);
+    transform: translateX(var(--tab-offset, 0px));
+    background: #ffffff;
+    border-radius: 3px;
+    border: 1px solid #dbdde3;
+    transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1),
+                width 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Suppress transition on initial paint */
+.seg-tabs[style*="--no-transition"]::before {
+    transition: none;
+}
+
 .seg-tab {
+    position: relative;
+    z-index: 1;
     flex: 1;
     padding: 4px 8px;
     border: 1px solid transparent;
@@ -492,28 +518,28 @@ p {
     font-weight: 500;
     line-height: 16px;
     color: #768196;
-    transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+    transition: color 220ms ease;
     white-space: nowrap;
     text-align: center;
 }
 
 .seg-tab.active {
-    background: #ffffff;
     color: #111419;
-    border-color: #dbdde3;
 }
 
-/* Thin divider between tabs (1px #dbdde3, 16px tall) */
+/* Thin divider between tabs */
 .seg-divider {
     display: block;
     width: 1px;
     height: 16px;
     background: #dbdde3;
     flex-shrink: 0;
+    transition: opacity 220ms ease;
+    z-index: 1;
 }
 
-/* Hide divider when neighbour tab is active */
-.seg-tab.active+.seg-divider,
+/* Hide divider adjacent to the active tab */
+.seg-tab.active + .seg-divider,
 .seg-divider:has(+ .seg-tab.active) {
     opacity: 0;
 }
@@ -728,6 +754,12 @@ input[type="range"]::-moz-range-thumb {
     height: 1.5px;
     background: #9aa0ab;
     flex-shrink: 0;
+}
+
+/* Normal mode: hide the sim swatch and connecting line */
+.legend-bar--normal .legend-bar__line,
+.legend-bar--normal .legend-bar__sim {
+    display: none;
 }
 
 /* Label: Geist 600 11px, lh=14px, #111419 */
