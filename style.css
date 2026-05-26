@@ -1,0 +1,892 @@
+/* ---------- CSS Custom Properties (Design Tokens) ---------- */
+:root {
+    /* Grayscale palette */
+    --color-bg: #f5f5f5;
+    --color-bg-alt: #eaeaea;
+    --color-surface: #ffffff;
+    --color-text: #1a1a1a;
+    --color-text-muted: #5c5c5c;
+    --color-border: #d4d4d4;
+    --color-border-light: #e8e8e8;
+
+    /* Official Wiener Linien U-Bahn colors */
+    --u1-color: #E20A17;
+    /* Red */
+    --u2-color: #A762A5;
+    /* Purple/Violet */
+    --u3-color: #EF7C00;
+    /* Orange */
+    --u4-color: #00963F;
+    /* Green */
+    --u6-color: #956734;
+    /* Brown */
+
+    /* Typography */
+    --font-display: 'Instrument Sans', sans-serif;
+    --font-body: 'Geist', sans-serif;
+
+    /* Spacing scale (4px base) */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+
+    /* Layout */
+    --max-width: 1200px;
+    --nav-height: 60px;
+    --border-radius: 6px;
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-base: 250ms ease;
+}
+
+
+/* ---------- Reset & Base ---------- */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: var(--font-body);
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+a {
+    color: var(--color-text);
+    text-decoration: none;
+    transition: opacity var(--transition-fast);
+}
+
+a:hover {
+    opacity: 0.7;
+}
+
+
+/* ---------- Typography ---------- */
+h1,
+h2,
+h3,
+h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+h1 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+}
+
+h2 {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+}
+
+h3 {
+    font-size: clamp(1.1rem, 2vw, 1.4rem);
+}
+
+p {
+    max-width: 65ch;
+    /* Optimal line length for readability */
+}
+
+
+/* ---------- Navigation ---------- */
+.nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-height);
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-lg);
+    z-index: 1000;
+}
+
+.nav__logo {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+/* Small colored bar next to logo — visual identity element */
+.nav__logo-bar {
+    width: 3px;
+    height: 20px;
+    border-radius: 2px;
+    background: linear-gradient(to bottom,
+            var(--u1-color) 0%,
+            var(--u1-color) 20%,
+            var(--u2-color) 20%,
+            var(--u2-color) 40%,
+            var(--u3-color) 40%,
+            var(--u3-color) 60%,
+            var(--u4-color) 60%,
+            var(--u4-color) 80%,
+            var(--u6-color) 80%,
+            var(--u6-color) 100%);
+}
+
+.nav__links {
+    display: flex;
+    gap: var(--space-lg);
+    list-style: none;
+}
+
+.nav__links a {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: var(--space-xs) 0;
+    position: relative;
+}
+
+/* Active page underline indicator */
+.nav__links a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--color-text);
+    border-radius: 1px;
+}
+
+/* Mobile hamburger menu button */
+.nav__toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-sm);
+}
+
+.nav__toggle span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--color-text);
+    margin: 5px 0;
+    transition: var(--transition-base);
+}
+
+
+/* ---------- Page Layout ---------- */
+.page-content {
+    margin-top: var(--nav-height);
+    padding: var(--space-2xl) var(--space-lg);
+    max-width: var(--max-width);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* ---------- Hero Section (index.html) ---------- */
+.hero {
+    min-height: calc(100vh - var(--nav-height));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: var(--space-3xl) var(--space-lg);
+    max-width: var(--max-width);
+    margin: 0 auto;
+}
+
+.hero__subtitle {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-md);
+}
+
+.hero__title {
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    margin-bottom: var(--space-lg);
+    max-width: 14ch;
+}
+
+.hero__description {
+    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    max-width: 50ch;
+    margin-bottom: var(--space-xl);
+    line-height: 1.7;
+}
+
+/* Color swatch strip on the hero page */
+.hero__swatches {
+    display: flex;
+    gap: 3px;
+    margin-bottom: var(--space-xl);
+}
+
+.hero__swatch {
+    width: 40px;
+    height: 6px;
+    border-radius: 3px;
+}
+
+.hero__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 12px 28px;
+    background: var(--color-text);
+    color: var(--color-surface);
+    border-radius: 32px;
+    transition: var(--transition-base);
+}
+
+.hero__cta:hover {
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(28, 28, 28, 0.15);
+}
+
+.hero__cta svg {
+    width: 16px;
+    height: 16px;
+}
+
+
+/* ---------- Section blocks ---------- */
+.section {
+    margin-bottom: var(--space-3xl);
+}
+
+.section__label {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-sm);
+}
+
+.section__title {
+    margin-bottom: var(--space-lg);
+}
+
+
+/* ---------- Card grid ---------- */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+    margin-top: var(--space-lg);
+}
+
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--border-radius);
+    padding: var(--space-lg);
+    transition: var(--transition-base);
+}
+
+.card:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.card__icon {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-md);
+}
+
+.card__title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+}
+
+.card__text {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+
+/* ---------- Map page ---------- */
+.map-body {
+    overflow: hidden;
+}
+
+.map-wrap {
+    position: fixed;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+/* =====================================================
+   SIMULATOR PANEL  (top-left, 297×330px from Figma)
+   ===================================================== */
+.sim-panel {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 340px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.07);
+    z-index: 100;
+}
+
+/* Header: 297×40px, padding 10px all sides, gap 16px */
+.sim-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background: #ffffff;
+    gap: 16px;
+    min-height: 40px;
+}
+
+.sim-panel__logo {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sim-panel__logo-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 16px;
+    color: #111419;
+}
+
+.sim-panel__collapse {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0.75;
+    transition: opacity 150ms ease;
+}
+
+.sim-panel__collapse:hover {
+    opacity: 1;
+}
+
+/* Body: 297×290px, border-top 1px #f9f9fa, padding 8 10 10 10, gap 16 */
+.sim-panel__body {
+    background: #ffffff;
+    border-top: 1px solid #f9f9fa;
+    padding: 8px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sim-panel__body.hidden {
+    display: none;
+}
+
+/* Each logical group within the body, gap 8px */
+.sim-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Description text: Inter 500 12px, #333b4a, lh 16px */
+.sim-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    color: #333b4a;
+    max-width: none;
+    margin: 0;
+}
+
+/* Section label: Geist 600 12px, #333b4a, lh 16px */
+.sim-label {
+    font-family: 'Geist', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16px;
+    color: #333b4a;
+    max-width: none;
+    margin: 0;
+}
+
+/* =====================================================
+   SEGMENTED TABS  (277×28px container, bg #ebedf0, r=4, p=2, gap=4)
+   Active tab: white bg, border #dbdde3, #111419 text
+   Inactive: transparent bg, #768196 text
+   Dividers between tabs: 1px #dbdde3 line
+   ===================================================== */
+.seg-tabs {
+    display: flex;
+    align-items: center;
+    background: #ebedf0;
+    border-radius: 4px;
+    padding: 2px;
+    gap: 0;
+}
+
+.seg-tab {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    color: #768196;
+    transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.seg-tab.active {
+    background: #ffffff;
+    color: #111419;
+    border-color: #dbdde3;
+}
+
+/* Thin divider between tabs (1px #dbdde3, 16px tall) */
+.seg-divider {
+    display: block;
+    width: 1px;
+    height: 16px;
+    background: #dbdde3;
+    flex-shrink: 0;
+}
+
+/* Hide divider when neighbour tab is active */
+.seg-tab.active+.seg-divider,
+.seg-divider:has(+ .seg-tab.active) {
+    opacity: 0;
+}
+
+/* =====================================================
+   SEVERITY SLIDER  (Frame 1000002502: 277×22px)
+   Track: 220×12px — base #e2e4e8, active #02051f
+   Knob: 12×12px white circle, border #747c90 0.2px
+   Badge: 40×22px, bg #ebedf0, r=4, Geist 500 11px
+   ===================================================== */
+.slider-sublabels {
+    display: flex;
+    justify-content: space-between;
+}
+
+.slider-sublabels span {
+    font-family: 'Geist', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 14px;
+    color: #333b4a;
+}
+
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 17px;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 4px;
+    background: linear-gradient(to right, #02051f 50%, #e2e4e8 50%);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffffff;
+    cursor: pointer;
+    border: 0.2px solid #747c90;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ffffff;
+    cursor: pointer;
+    border: 0.2px solid #747c90;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    border: none;
+}
+
+/* Percentage badge: 40×22px, bg #ebedf0, r=4, p=4 8, Geist 500 11px */
+.severity-badge {
+    background: #ebedf0;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: 'Geist', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 14px;
+    color: #111419;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* =====================================================
+   CVD INFO BOX  (277×80px, bg #f9f9fa, border 0.5px #dbdde3, r=8, p=8)
+   Inter 500 12px, lh 16px, color #333b4a
+   Title bold #111419
+   ===================================================== */
+.cvd-info-box {
+    background: #f9f9fa;
+    border: 0.5px solid #dbdde3;
+    border-radius: 8px;
+    padding: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    color: #333b4a;
+}
+
+.cvd-info-box__title {
+    font-weight: 700;
+    color: #111419;
+}
+
+/* =====================================================
+   MAP CONTROLS  (top-right, Frame 20: 40×196px, gap=16)
+   Sidebar btn: 40×40, r=32 (full circle), white bg
+   Zoom group: + top r=26.67 top only, − bottom no radius, border #dbdde3 0.6px
+   Compass: 40×40, r=32 (full circle), white bg, gap=20 below zoom
+   ===================================================== */
+.map-controls {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    z-index: 100;
+}
+
+.map-ctrl {
+    width: 40px;
+    height: 40px;
+    background: #ffffff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 150ms ease;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.map-ctrl:hover {
+    background: #f5f5f7;
+}
+
+/* Fully-rounded buttons */
+.map-ctrl--round {
+    border-radius: 32px;
+}
+
+/* Zoom group: + and − share one rounded-rectangle shape */
+.map-ctrl-zoom {
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+    border-radius: 26.67px 26.67px 0 0;
+    overflow: hidden;
+}
+
+.map-ctrl-zoom .map-ctrl {
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.map-ctrl--zoom-in {
+    border-radius: 26.67px 26.67px 0 0 !important;
+    border-bottom: 0.6px solid #dbdde3 !important;
+}
+
+.map-ctrl--zoom-out {
+    border-radius: 0px 0px 26.67px 26.67px !important;
+}
+
+/* =====================================================
+   LEGEND PILL  (bottom-center, Frame 33: 493×30px)
+   bg #ffffff, r=8, p=8, gap=16, HORIZONTAL
+   Each item: [orig 14×14 r=4] [1px divider #333b4a] [sim 14×14 r=4] [Geist 600 11px label]
+   gap between swatches group and label: 4px
+   ===================================================== */
+.legend-bar {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 0px 16px 8px rgba(37, 42, 52, 0.05);
+    z-index: 100;
+    white-space: nowrap;
+}
+
+.legend-bar__item {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.legend-bar__orig,
+.legend-bar__sim {
+    display: block;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.legend-bar__orig {
+    border-radius: 4px;
+}
+
+.legend-bar__sim {
+    border-radius: 4px;
+    transition: background-color 250ms ease;
+}
+
+/* Short horizontal line between orig and sim swatches */
+.legend-bar__line {
+    display: block;
+    width: 10px;
+    height: 1.5px;
+    background: #9aa0ab;
+    flex-shrink: 0;
+}
+
+/* Label: Geist 600 11px, lh=14px, #111419 */
+.legend-bar__name {
+    font-family: 'Geist', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 14px;
+    color: #111419;
+}
+
+
+/* ---------- Content Pages ---------- */
+.content-page {
+    padding-top: var(--space-2xl);
+    padding-bottom: var(--space-3xl);
+}
+
+.content-page h2 {
+    margin-top: var(--space-2xl);
+    margin-bottom: var(--space-md);
+}
+
+.content-page h3 {
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-sm);
+}
+
+.content-page p {
+    margin-bottom: var(--space-md);
+    color: var(--color-text-muted);
+}
+
+.content-page ul,
+.content-page ol {
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-lg);
+    color: var(--color-text-muted);
+}
+
+.content-page li {
+    margin-bottom: var(--space-sm);
+}
+
+/* Reference list styling */
+.references {
+    list-style: none;
+    padding-left: 0;
+}
+
+.references li {
+    padding-left: var(--space-lg);
+    text-indent: calc(-1 * var(--space-lg));
+    font-size: 0.88rem;
+    line-height: 1.7;
+    margin-bottom: var(--space-md);
+}
+
+
+/* ---------- Footer ---------- */
+.footer {
+    border-top: 1px solid var(--color-border-light);
+    padding: var(--space-xl) var(--space-lg);
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.footer a {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+
+/* ---------- Responsive Breakpoints ---------- */
+
+@media (max-width: 600px) {
+    .nav__toggle {
+        display: block;
+    }
+
+    .nav__links {
+        display: none;
+        position: absolute;
+        top: var(--nav-height);
+        left: 0;
+        right: 0;
+        background: var(--color-surface);
+        flex-direction: column;
+        padding: var(--space-md) var(--space-lg);
+        border-bottom: 1px solid var(--color-border-light);
+        gap: var(--space-md);
+        z-index: 1001;
+    }
+
+    .nav__links.open {
+        display: flex;
+    }
+
+    .sim-panel {
+        left: 8px;
+        top: 8px;
+        width: calc(100vw - 16px);
+        max-width: 297px;
+    }
+
+    .map-controls {
+        top: 8px;
+        right: 8px;
+    }
+
+    .legend-bar {
+        bottom: 12px;
+        gap: 10px;
+        padding: 7px 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: calc(100vw - 32px);
+    }
+
+    .hero {
+        padding: var(--space-xl) var(--space-md);
+    }
+
+    .hero__title {
+        font-size: 1.8rem;
+    }
+
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* ---------- Utility Classes ---------- */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.text-muted {
+    color: var(--color-text-muted);
+}
+
+.mt-lg {
+    margin-top: var(--space-lg);
+}
+
+.mb-lg {
+    margin-bottom: var(--space-lg);
+}

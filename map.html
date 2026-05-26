@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map — MapLens</title>
+    <meta name="description" content="Interactive CVD simulation on Vienna's U-Bahn map.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="map-body">
+
+    <!-- SVG Filter for CVD simulation -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden;">
+        <defs>
+            <filter id="cvd-filter" color-interpolation-filters="linearRGB">
+                <feColorMatrix id="cvd-matrix" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" />
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- ===== Navigation ===== -->
+    <nav class="nav" aria-label="Main navigation">
+        <a href="index.html" class="nav__logo">
+            <span class="nav__logo-bar" aria-hidden="true"></span>
+            MapLens
+        </a>
+        <button class="nav__toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="nav__links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="map.html" class="active">Map</a></li>
+            <li><a href="about-cvd.html">About CVD</a></li>
+            <li><a href="about.html">About</a></li>
+        </ul>
+    </nav>
+
+    <!-- ===== Full-screen Map ===== -->
+    <div class="map-wrap">
+        <div id="map"></div>
+
+        <!-- ===== Simulator Panel (top-left) — 297px wide ===== -->
+        <div class="sim-panel" id="simulator-card">
+
+            <!-- Header: MapLens logo + collapse icon -->
+            <div class="sim-panel__header">
+                <div class="sim-panel__logo">
+                    <span class="sim-panel__logo-text">Seeing the lines</span>
+                </div>
+                <button class="sim-panel__collapse" id="simulator-collapse" aria-label="Toggle panel"
+                    aria-expanded="true">
+                    <!-- sidebar icon: two vertical panels -->
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g clip-path="url(#clip0_2056_374)">
+                            <path d="M5.5 3V13" stroke="#404446" stroke-linecap="round" stroke-linejoin="round" />
+                            <path
+                                d="M13.5 3H2.5C2.22386 3 2 3.22386 2 3.5V12.5C2 12.7761 2.22386 13 2.5 13H13.5C13.7761 13 14 12.7761 14 12.5V3.5C14 3.22386 13.7761 3 13.5 3Z"
+                                stroke="#404446" stroke-linecap="round" stroke-linejoin="round" />
+                        </g>
+                        <defs>
+                            <clipPath id="clip0_2056_374">
+                                <rect width="16" height="16" fill="white" />
+                            </clipPath>
+                        </defs>
+                    </svg>
+
+                </button>
+            </div>
+
+            <!-- Body (collapsible) -->
+            <div class="sim-panel__body" id="simulator-body">
+
+                <!-- Description + deficiency tabs -->
+                <div class="sim-group">
+                    <p class="sim-desc">How colour vision deficiency affects readability of the U-Bahn network map.</p>
+                    <p class="sim-label">Deficiency type</p>
+                    <div class="seg-tabs" role="radiogroup" aria-label="Select deficiency type">
+                        <button class="seg-tab" data-cvd-type="normal" role="radio" aria-checked="false">Normal</button>
+                        <span class="seg-divider"></span>
+                        <button class="seg-tab" data-cvd-type="protanopia" role="radio"
+                            aria-checked="false">Protan</button>
+                        <span class="seg-divider"></span>
+                        <button class="seg-tab active" data-cvd-type="deuteranopia" role="radio"
+                            aria-checked="true">Deutan</button>
+                        <span class="seg-divider"></span>
+                        <button class="seg-tab" data-cvd-type="tritanopia" role="radio"
+                            aria-checked="false">Tritan</button>
+                    </div>
+                </div>
+
+                <!-- Severity slider -->
+                <div class="sim-group sim-group--severity">
+                    <p class="sim-label">Severity</p>
+                    <div class="slider-sublabels">
+                        <span>Less&nbsp;&nbsp;severe</span>
+                        <span>Very severe</span>
+                    </div>
+                    <div class="slider-row">
+                        <input type="range" id="severity-slider" min="0" max="100" value="50" step="5"
+                            aria-label="Simulation severity">
+                        <div class="severity-badge" id="severity-value">50%</div>
+                    </div>
+                </div>
+
+                <!-- CVD info box -->
+                <div id="cvd-info-box" class="cvd-info-box" aria-live="polite" role="status">
+                    <span class="cvd-info-box__title">Deuteranopia:&nbsp;</span>Difficulty telling red and green colours
+                    apart. Reds may appear brighter due to missing M-cones. Most common type of colour blindness.
+                    Affects ~1.2% of men.
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ===== Map controls (top-right) — Frame 20 ===== -->
+        <div class="map-controls" id="map-controls">
+            <!-- Sidebar toggle (top, fully rounded) -->
+            <button class="map-ctrl map-ctrl--round" aria-label="Toggle sidebar" id="sidebar-toggle">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip0_2056_308)">
+                        <path d="M10 3.75V16.25" stroke="#333B4A" stroke-width="1.25" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path
+                            d="M16.875 3.75H3.125C2.77982 3.75 2.5 4.02982 2.5 4.375V15.625C2.5 15.9702 2.77982 16.25 3.125 16.25H16.875C17.2202 16.25 17.5 15.9702 17.5 15.625V4.375C17.5 4.02982 17.2202 3.75 16.875 3.75Z"
+                            stroke="#333B4A" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
+                    </g>
+                    <defs>
+                        <clipPath id="clip0_2056_308">
+                            <rect width="20" height="20" fill="white" />
+                        </clipPath>
+                    </defs>
+                </svg>
+
+
+            </button>
+
+            <!-- Zoom group: + on top (rounded top), - on bottom (square bottom) -->
+            <div class="map-ctrl-zoom">
+                <button class="map-ctrl map-ctrl--zoom-in" aria-label="Zoom in" id="zoom-in">
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                        <line x1="6.5" y1="0.5" x2="6.5" y2="12.5" stroke="#333b4a" stroke-width="1.2"
+                            stroke-linecap="round" />
+                        <line x1="0.5" y1="6.5" x2="12.5" y2="6.5" stroke="#333b4a" stroke-width="1.2"
+                            stroke-linecap="round" />
+                    </svg>
+                </button>
+                <button class="map-ctrl map-ctrl--zoom-out" aria-label="Zoom out" id="zoom-out">
+                    <svg width="13" height="1" viewBox="0 0 13 1" fill="none">
+                        <line x1="0.5" y1="0.5" x2="12.5" y2="0.5" stroke="#333b4a" stroke-width="1.2"
+                            stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Compass (bottom, fully rounded) -->
+            <button class="map-ctrl map-ctrl--round" aria-label="Reset north" id="compass-btn">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip0_2056_323)">
+                        <path
+                            d="M8.12499 11.875L1.6914 10.0781C1.56529 10.0395 1.45464 9.96195 1.37529 9.85661C1.29593 9.75126 1.25193 9.62351 1.24959 9.49165C1.24725 9.35978 1.28669 9.23055 1.36226 9.12245C1.43782 9.01436 1.54565 8.93294 1.6703 8.88985L15.4203 3.78985C15.5306 3.75233 15.6492 3.7464 15.7627 3.77271C15.8762 3.79902 15.9801 3.85653 16.0626 3.93875C16.1452 4.02097 16.2031 4.12462 16.2298 4.23802C16.2566 4.35141 16.2511 4.47002 16.2141 4.58047L11.1141 18.3305C11.071 18.4551 10.9895 18.563 10.8815 18.6385C10.7734 18.7141 10.6441 18.7535 10.5123 18.7512C10.3804 18.7488 10.2526 18.7048 10.1473 18.6255C10.042 18.5461 9.96441 18.4355 9.92577 18.3094L8.12499 11.875Z"
+                            stroke="#333B4A" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
+                    </g>
+                    <defs>
+                        <clipPath id="clip0_2056_323">
+                            <rect width="20" height="20" fill="white" transform="matrix(-1 0 0 1 20 0)" />
+                        </clipPath>
+                    </defs>
+                </svg>
+
+            </button>
+        </div>
+
+        <!-- ===== Legend pill (bottom-center) ===== -->
+        <!-- Pattern: [orig square] — [sim square] Label (5 U-Bahn lines from GeoJSON) -->
+        <div class="legend-bar" id="legend-bar">
+
+            <div class="legend-bar__item">
+                <span class="legend-bar__orig" style="background:#e8383a;"></span>
+                <span class="legend-bar__line"></span>
+                <span class="legend-bar__sim" id="sim-swatch-U1" style="background:#e8383a;"></span>
+                <span class="legend-bar__name">U1</span>
+            </div>
+
+            <div class="legend-bar__item">
+                <span class="legend-bar__orig" style="background:#733e91;"></span>
+                <span class="legend-bar__line"></span>
+                <span class="legend-bar__sim" id="sim-swatch-U2" style="background:#733e91;"></span>
+                <span class="legend-bar__name">U2</span>
+            </div>
+
+            <div class="legend-bar__item">
+                <span class="legend-bar__orig" style="background:#f49719;"></span>
+                <span class="legend-bar__line"></span>
+                <span class="legend-bar__sim" id="sim-swatch-U3" style="background:#f49719;"></span>
+                <span class="legend-bar__name">U3</span>
+            </div>
+
+            <div class="legend-bar__item">
+                <span class="legend-bar__orig" style="background:#49ad32;"></span>
+                <span class="legend-bar__line"></span>
+                <span class="legend-bar__sim" id="sim-swatch-U4" style="background:#49ad32;"></span>
+                <span class="legend-bar__name">U4</span>
+            </div>
+
+            <div class="legend-bar__item">
+                <span class="legend-bar__orig" style="background:#9f3939;"></span>
+                <span class="legend-bar__line"></span>
+                <span class="legend-bar__sim" id="sim-swatch-U6" style="background:#9f3939;"></span>
+                <span class="legend-bar__name">U6</span>
+            </div>
+
+        </div>
+
+    </div><!-- /map-wrap -->
+
+    <script src="app.js"></script>
+</body>
+
+</html>

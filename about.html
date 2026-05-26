@@ -3,9 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About</title>
+    <title>About — Seeing the Lines</title>
+    <meta name="description" content="Project methodology, team, data sources, and references for the Vienna U-Bahn color accessibility study.">
+
+    <!-- Google Fonts: Instrument Sans (display), Geist (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Project stylesheet -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
+
+    <!-- ===== Navigation ===== -->
+    <nav class="nav" aria-label="Main navigation">
+        <a href="index.html" class="nav__logo">
+            <span class="nav__logo-bar" aria-hidden="true"></span>
+            Seeing the Lines
+        </a>
+        <button class="nav__toggle" aria-label="Toggle navigation menu">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="nav__links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="map.html">Map</a></li>
+            <li><a href="about-cvd.html">About CVD</a></li>
+            <li><a href="about.html" class="active">About</a></li>
+        </ul>
+    </nav>
+
+
+    <!-- ===== Page Content ===== -->
+    <main class="page-content content-page">
+
+        <!-- Page Header -->
+        <p class="section__label">The Project</p>
+        <h1 class="section__title">About This Project</h1>
+        <p>
+            <strong>Seeing the Lines</strong> is a web mapping project that
+            investigates the color accessibility of Vienna's U-Bahn network
+            map. It was developed as part of the VU Web Mapping and VU
+            Multimedia Cartography courses at TU Wien in the summer semester
+            of 2026.
+        </p>
+
+
+        <!-- ===== Motivation ===== -->
+        <h2>Motivation</h2>
+        <p>
+            Vienna's five U-Bahn lines are identified primarily by color:
+            red (U1), purple (U2), orange (U3), green (U4), and brown (U6).
+            This color-based encoding works well for people with typical
+            trichromatic vision, but roughly 8% of the male population has
+            some form of color vision deficiency that can make certain line
+            pairs indistinguishable.
+        </p>
+        <p>
+            Rather than simply stating that "some colors look the same,"
+            this project makes the problem visible and measurable. Users can
+            toggle between CVD types, adjust severity, and see quantified
+            WCAG contrast ratios — turning an abstract accessibility concept
+            into a concrete, interactive experience.
+        </p>
+
+
+        <!-- ===== Methodology ===== -->
+        <h2>Methodology</h2>
+
+        <h3>CVD Simulation</h3>
+        <p>
+            The simulation uses the physiologically-based model published by
+            Machado, Oliveira, and Fernandes (2009). Their 3×3 color
+            transformation matrices are applied in two ways:
+        </p>
+        <ol>
+            <li>
+                <strong>Map canvas:</strong> An SVG
+                <code>&lt;feColorMatrix&gt;</code> filter is applied to the
+                MapLibre GL JS canvas via the CSS <code>filter</code>
+                property. This transforms all rendered pixels (basemap +
+                U-Bahn lines) as a post-compositing step — accurately
+                reflecting how CVD affects the entire visual field, not
+                selective elements.
+            </li>
+            <li>
+                <strong>Legend and UI:</strong> The same 3×3 matrices are
+                applied via JavaScript matrix multiplication to compute the
+                simulated color for each U-Bahn line. This updates the legend
+                swatches, which sit outside the filtered canvas and are not
+                affected by the CSS filter.
+            </li>
+        </ol>
+
+        <h3>Basemap Design</h3>
+        <p>
+            The basemap uses a deliberate grayscale palette built on
+            OpenFreeMap vector tiles. Grayscale tones (where R = G = B) are
+            approximately invariant under CVD color matrices — they remain
+            gray regardless of which cone type is absent. This ensures that
+            the colored U-Bahn lines are the dominant visual change when a
+            CVD simulation is activated, isolating the variable under study.
+        </p>
+
+        <h3>Contrast Analysis</h3>
+        <p>
+            For each pair of U-Bahn line colors, the project computes the
+            WCAG 2.2 contrast ratio using the relative luminance formula:
+        </p>
+        <p style="text-align: center; font-family: var(--font-mono); font-size: 0.95rem; padding: var(--space-md) 0;">
+            Contrast Ratio = (L1 + 0.05) / (L2 + 0.05)
+        </p>
+        <p>
+            where L1 and L2 are the relative luminances of the lighter and
+            darker colors, respectively. Relative luminance is computed per
+            WCAG 2.2 using the sRGB linearisation formula with gamma
+            correction:
+        </p>
+        <p style="text-align: center; font-family: var(--font-mono); font-size: 0.88rem; padding: var(--space-md) 0;">
+            L = 0.2126 × R<sub>lin</sub> + 0.7152 × G<sub>lin</sub> + 0.0722 × B<sub>lin</sub>
+        </p>
+        <p>
+            The threshold used is <strong>3:1</strong>, which is the minimum
+            required by WCAG 2.2 Success Criterion 1.4.11 ("Non-text
+            Contrast") for graphical elements that convey meaningful
+            information. Line pairs that fall below this threshold are flagged
+            as failing accessibility requirements.
+        </p>
+
+        <h3>Severity Interpolation</h3>
+        <p>
+            The severity slider interpolates linearly between the identity
+            matrix (normal vision, t = 0) and the full CVD matrix
+            (complete cone absence, t = 1). Each matrix coefficient is
+            interpolated independently. This allows users to explore the
+            spectrum from mild anomaly to complete dichromacy, though the
+            perceptual effect is nonlinear — most confusion becomes apparent
+            even at moderate severity levels.
+        </p>
+
+
+        <!-- ===== Technology Stack ===== -->
+        <h2>Technology Stack</h2>
+        <ul>
+            <li>
+                <strong>MapLibre GL JS 4.7.1</strong> — Open-source WebGL
+                map rendering library for vector tiles. Chosen over Leaflet
+                for its superior vector tile support and WebGL pipeline.
+            </li>
+            <li>
+                <strong>OpenFreeMap</strong> — Free vector tile service
+                providing OpenStreetMap data in the Mapbox Vector Tile format.
+                Used for the grayscale basemap.
+            </li>
+            <li>
+                <strong>SVG <code>&lt;feColorMatrix&gt;</code></strong> — 
+                W3C-standard SVG filter primitive that applies a 4×5 (or 5×4)
+                matrix transformation to the RGBA channels of a rendered
+                element. Used to simulate CVD on the map canvas.
+            </li>
+            <li>
+                <strong>Vanilla HTML, CSS, JavaScript</strong> — No
+                frameworks, no build tools, no npm. All code is hand-written
+                as required by the course brief. External libraries (MapLibre,
+                fonts) are loaded via CDN.
+            </li>
+        </ul>
+
+
+        <!-- ===== Data Sources ===== -->
+        <h2>Data Sources</h2>
+        <ul>
+            <li>
+                <strong>U-Bahn route and station data:</strong>
+                GeoJSON dataset from the City of Vienna Open Data portal
+                (<a href="https://www.data.gv.at/" target="_blank" rel="noopener">data.gv.at</a>).
+                Contains 98 line segments and 99 station points across 5
+                lines (U1, U2, U3, U4, U6) in EPSG:4326 (WGS 84).
+            </li>
+            <li>
+                <strong>Basemap tiles:</strong>
+                OpenFreeMap vector tiles
+                (<a href="https://openfreemap.org/" target="_blank" rel="noopener">openfreemap.org</a>),
+                styled with a custom grayscale MapLibre style.
+            </li>
+            <li>
+                <strong>Official U-Bahn line colors:</strong>
+                Wiener Linien corporate identity. U1: #E20A17 (red),
+                U2: #A762A5 (purple), U3: #EF7C00 (orange), U4: #00963F
+                (green), U6: #956734 (brown).
+            </li>
+        </ul>
+
+        <h3>Data Notes</h3>
+        <p>
+            The GeoJSON dataset contains one feature with a
+            <code>null</code> value in the <code>LINFO</code> (line number)
+            field: the station "Lina-Loos-Platz," which is labelled "U2
+            Nord" in the remarks field. This is a planned station on the
+            future U2 extension that has not yet been assigned a line number
+            in the dataset. It is filtered out during data loading to avoid
+            rendering errors. No U5 data exists in the dataset, which is
+            correct — the U5 line is under construction and not yet in
+            service.
+        </p>
+
+
+        <!-- ===== WCAG Guidelines ===== -->
+        <h2>WCAG 2.2 Accessibility Standards</h2>
+        <p>
+            The Web Content Accessibility Guidelines (WCAG) 2.2, published
+            by the W3C Web Accessibility Initiative, define testable success
+            criteria for making web content accessible. The criteria most
+            relevant to this project are:
+        </p>
+        <ul>
+            <li>
+                <strong>SC 1.4.1 — Use of Color (Level A):</strong>
+                Color must not be the only visual means of conveying
+                information. Transit maps that rely solely on line color
+                for identification do not satisfy this criterion.
+            </li>
+            <li>
+                <strong>SC 1.4.11 — Non-text Contrast (Level AA):</strong>
+                Graphical elements required for understanding content must
+                have a contrast ratio of at least 3:1 against adjacent
+                colors. This is the threshold used in our contrast analysis.
+            </li>
+            <li>
+                <strong>SC 1.4.3 — Contrast (Minimum) (Level AA):</strong>
+                Text must have a contrast ratio of at least 4.5:1 (or 3:1
+                for large text). While primarily about text, this criterion
+                sets the precedent for the overall contrast requirements.
+            </li>
+        </ul>
+
+
+        <!-- ===== Team ===== -->
+        <h2>Team</h2>
+        <p>
+            This project was developed by <strong>Michael Olanrewaju</strong>
+            and <strong>Aderonke Adetoro</strong> as part of the MSc
+            Cartography and Geoinformatics programme at TU Wien, summer
+            semester 2026.
+        </p>
+        <ul>
+            <li>
+                <strong>Michael Olanrewaju</strong> — Map implementation,
+                JavaScript interaction, CVD simulation engine, contrast
+                ratio computation.
+            </li>
+            <li>
+                <strong>Aderonke Adetoro</strong> — Site design, responsive
+                layout, CVD research and written content, fieldwork and
+                ground-truth photography.
+            </li>
+        </ul>
+
+
+        <!-- ===== References ===== -->
+        <h2>References</h2>
+        <ol class="references">
+            <li>
+                Machado, G. M., Oliveira, M. M., &amp; Fernandes, L. A. F.
+                (2009). A physiologically-based model for simulation of
+                color vision deficiency. <em>IEEE Transactions on
+                Visualization and Computer Graphics</em>, 15(6), 1291–1298.
+                doi:10.1109/TVCG.2009.113
+            </li>
+            <li>
+                World Wide Web Consortium (2023). <em>Web Content
+                Accessibility Guidelines (WCAG) 2.2</em>. W3C
+                Recommendation.
+                <a href="https://www.w3.org/TR/WCAG22/" target="_blank" rel="noopener">
+                    https://www.w3.org/TR/WCAG22/
+                </a>
+            </li>
+            <li>
+                Jenny, B., &amp; Kelso, N. V. (2007). Color design for the
+                color vision impaired. <em>Cartographic Perspectives</em>,
+                58, 61–67.
+            </li>
+            <li>
+                Brettel, H., Viénot, F., &amp; Mollon, J. D. (1997).
+                Computerized simulation of color appearance for dichromats.
+                <em>Journal of the Optical Society of America A</em>, 14(10),
+                2647–2655.
+            </li>
+            <li>
+                Sharpe, L. T., Stockman, A., Jägle, H., &amp; Nathans, J.
+                (1999). Opsin genes, cone photopigments, color vision, and
+                color blindness. In K. R. Gegenfurtner &amp; L. T. Sharpe
+                (Eds.), <em>Color Vision: From Genes to Perception</em>
+                (pp. 3–51). Cambridge University Press.
+            </li>
+            <li>
+                City of Vienna (2024). Open Government Data Wien.
+                <a href="https://www.data.gv.at/" target="_blank" rel="noopener">
+                    https://www.data.gv.at/
+                </a>
+            </li>
+            <li>
+                MapLibre Contributors (2024). MapLibre GL JS
+                Documentation.
+                <a href="https://maplibre.org/maplibre-gl-js/docs/" target="_blank" rel="noopener">
+                    https://maplibre.org/maplibre-gl-js/docs/
+                </a>
+            </li>
+            <li>
+                Wiener Linien GmbH &amp; Co KG.
+                <a href="https://www.wienerlinien.at/" target="_blank" rel="noopener">
+                    https://www.wienerlinien.at/
+                </a>
+            </li>
+        </ol>
+
+
+        <!-- ===== License / Disclaimer ===== -->
+        <h2>License &amp; Disclaimer</h2>
+        <p>
+            This project is an academic exercise. The U-Bahn route data is
+            sourced from Vienna's Open Government Data portal under the
+            Creative Commons Attribution 4.0 licence (CC BY 4.0). Map tiles
+            are provided by OpenFreeMap using OpenStreetMap data (&copy;
+            OpenStreetMap contributors). The Wiener Linien brand colors are
+            used for analytical purposes only and do not imply endorsement
+            by Wiener Linien.
+        </p>
+    </main>
+
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+        <p>
+            Seeing the Lines — A project by Michael Olanrewaju &amp; Aderonke Adetoro<br>
+            VU Web Mapping &amp; VU Multimedia Cartography 2026, TU Wien<br>
+            Data: <a href="https://www.data.gv.at/" target="_blank" rel="noopener">City of Vienna Open Data</a> · 
+            Map tiles: <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>
+        </p>
+    </footer>
+
+    <!-- Navigation toggle script -->
+    <script src="js/app.js"></script>
 </body>
 </html>

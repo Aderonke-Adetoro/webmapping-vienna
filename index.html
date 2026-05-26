@@ -1,853 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vienna Transit – CVD Accessibility Simulation</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seeing the Lines — Color Accessibility of Vienna's U-Bahn Map</title>
+    <meta name="description" content="An interactive simulation of how color vision deficiency affects the readability of Vienna's U-Bahn network map.">
 
-  <!-- 
-    Leaflet CSS — required for map tiles, controls, and popups to render.
-    Loaded from CDN so this file works standalone with no build step.
-  -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  />
+    <!-- Google Fonts: Instrument Sans (display), Geist (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <style>
-    /* ================================================================ */
-    /* RESET & BASE                                                     */
-    /* ================================================================ */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: "DM Sans", "Segoe UI", system-ui, sans-serif;
-      background: #f5f5f5;
-      color: #1a1a1a;
-      line-height: 1.65;a
-    }
-
-    .page {
-      max-width: 820px;
-      margin: 0 auto;
-      padding: 1.5rem 1rem 3rem;
-    }
-
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .subtitle {
-      font-size: 0.85rem;
-      color: #777;
-      margin: 0.2rem 0 1.5rem;
-    }
-
-    /* ================================================================ */
-    /* NAVIGATION TABS                                                  */
-    /* ================================================================ */
-    .tabs {
-      display: flex;
-      gap: 0.25rem;
-      border-bottom: 1px solid #e0e0e0;
-      margin-bottom: 1.25rem;
-    }
-
-    .tab-btn {
-      padding: 0.5rem 1rem;
-      font-size: 0.8rem;
-      font-weight: 400;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: #888;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .tab-btn.active {
-      font-weight: 600;
-      color: #1a1a1a;
-      border-bottom-color: #1a1a1a;
-    }
-
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    /* ================================================================ */
-    /* CVD TYPE SELECTOR                                                */
-    /* ================================================================ */
-    .cvd-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .cvd-btn {
-      padding: 0.35rem 0.85rem;
-      font-size: 0.78rem;
-      font-weight: 400;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      background: #fff;
-      color: #555;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .cvd-btn:hover { background: #f0f4ff; }
-
-    .cvd-btn.active {
-      font-weight: 600;
-      border: 1.5px solid #1a56db;
-      background: #eef2ff;
-      color: #1a56db;
-    }
-
-    /* ================================================================ */
-    /* SEVERITY SLIDER                                                  */
-    /* ================================================================ */
-    .severity-row {
-      display: none;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.6rem 0.8rem;
-      background: #f8f8f8;
-      border-radius: 8px;
-      margin-bottom: 0.75rem;
-    }
-
-    .severity-row.visible { display: flex; }
-
-    .severity-row label {
-      font-size: 0.78rem;
-      color: #666;
-      white-space: nowrap;
-    }
-
-    .severity-row input[type="range"] { flex: 1; }
-
-    .severity-value {
-      font-size: 0.78rem;
-      font-weight: 600;
-      font-family: ui-monospace, monospace;
-      min-width: 36px;
-      text-align: right;
-    }
-
-    /* ================================================================ */
-    /* INFO BAR                                                         */
-    /* ================================================================ */
-    .info-bar {
-      padding: 0.6rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      color: #444;
-      margin-bottom: 1rem;
-    }
-
-    .info-bar.normal { background: #f0fdf4; border: 1px solid #bbf7d0; }
-    .info-bar.cvd    { background: #fef9ee; border: 1px solid #fde68a; }
-    .info-bar .prevalence { color: #888; margin-left: 6px; }
-
-    /* ================================================================ */
-    /* MAP                                                              */
-    /* ================================================================ */
-    .map-wrapper {
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid #ddd;
-      transition: filter 0.3s ease;
-    }
-
-    #map { width: 100%; height: 450px; }
-
-    /* ================================================================ */
-    /* LEGEND                                                           */
-    /* ================================================================ */
-    .legend-box {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem 1.2rem;
-      margin-top: 1rem;
-      padding: 0.7rem 0.85rem;
-      background: #fafafa;
-      border-radius: 8px;
-      border: 1px solid #eee;
-    }
-
-    .legend-title { font-size: 0.72rem; color: #999; width: 100%; margin-bottom: 2px; }
-    .legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: #555; }
-    .legend-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); }
-    .legend-arrow { font-size: 0.7rem; color: #bbb; }
-
-    /* ================================================================ */
-    /* CONTRAST TABLE                                                   */
-    /* ================================================================ */
-    .contrast-intro { font-size: 0.82rem; color: #666; margin-bottom: 1rem; }
-
-    .contrast-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; table-layout: fixed; }
-    .contrast-table th, .contrast-table td { padding: 0.4rem; text-align: center; border-bottom: 1px solid #eee; }
-    .contrast-table th { font-weight: 600; border-bottom-color: #ddd; }
-    .contrast-table th:first-child, .contrast-table td:first-child { text-align: left; }
-
-    .cell-pass { background: #f0fdf4; }
-    .cell-fail { background: #fef2f2; }
-    .cell-empty { background: #fafafa; }
-
-    .ratio-num { font-weight: 600; font-size: 0.82rem; }
-    .wcag-pass { font-size: 0.65rem; font-weight: 500; color: #16a34a; }
-    .wcag-fail { font-size: 0.65rem; font-weight: 500; color: #dc2626; }
-
-    .finding-box {
-      margin-top: 1rem;
-      padding: 0.6rem 0.85rem;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      color: #7f1d1d;
-    }
-
-    /* ================================================================ */
-    /* ABOUT TAB                                                        */
-    /* ================================================================ */
-    .about h2 { font-size: 1.1rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }
-    .about h2:first-child { margin-top: 0; }
-    .about p { margin-bottom: 0.75rem; font-size: 0.85rem; color: #333; }
-    .about code {
-      background: #f0f0f0;
-      padding: 1px 5px;
-      border-radius: 3px;
-      font-family: ui-monospace, monospace;
-      font-size: 0.8rem;
-    }
-
-    .code-block {
-      padding: 0.8rem 1rem;
-      background: #1a1a1a;
-      color: #e0e0e0;
-      border-radius: 8px;
-      font-family: ui-monospace, monospace;
-      font-size: 0.78rem;
-      line-height: 1.7;
-      margin-bottom: 1rem;
-      overflow-x: auto;
-      white-space: pre;
-    }
-
-    .c-cmt { color: #888; }
-    .c-sel { color: #93c5fd; }
-    .c-val { color: #86efac; }
-    .c-tag { color: #c084fc; }
-    .c-prop { color: #fbbf24; }
-
-    .data-sources div { font-size: 0.8rem; color: #555; line-height: 1.8; }
-
-    /* ================================================================ */
-    /* FOOTER                                                           */
-    /* ================================================================ */
-    .footer {
-      margin-top: 2rem;
-      padding-top: 1rem;
-      border-top: 1px solid #eee;
-      font-size: 0.72rem;
-      color: #aaa;
-      text-align: center;
-    }
-
-    .inline-swatch {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 2px;
-      vertical-align: middle;
-      margin-right: 3px;
-    }
-  </style>
+    <!-- Project stylesheet -->
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-<div class="page">
 
-  <h1>Vienna transit — CVD accessibility</h1>
-  <p class="subtitle">How colour vision deficiency affects readability of the U-Bahn network map</p>
-
-  <!-- ============================================================== -->
-  <!-- SVG FILTER DEFINITION                                          -->
-  <!--                                                                -->
-  <!-- A single <feColorMatrix> whose "values" attribute is updated   -->
-  <!-- by JavaScript whenever the CVD type or severity changes.       -->
-  <!--                                                                -->
-  <!-- The 5×4 matrix multiplies every pixel's [R G B A 1] vector:   -->
-  <!--   Row 1 → Red output channel                                  -->
-  <!--   Row 2 → Green output channel                                -->
-  <!--   Row 3 → Blue output channel                                 -->
-  <!--   Row 4 → Alpha output (identity: 0 0 0 1 0)                  -->
-  <!--                                                                -->
-  <!-- Matrices: Machado, Oliveira & Fernandes (2009), IEEE TVCG      -->
-  <!-- ============================================================== -->
-  <svg xmlns="http://www.w3.org/2000/svg"
-       style="position:absolute;width:0;height:0;overflow:hidden"
-       aria-hidden="true">
-    <defs>
-      <filter id="cvd-filter">
-        <feColorMatrix id="cvd-matrix" type="matrix"
-          values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" />
-      </filter>
-    </defs>
-  </svg>
-
-  <!-- Tabs -->
-  <div class="tabs" id="tabs">
-    <button class="tab-btn active" data-tab="tab-map">Map simulation</button>
-    <button class="tab-btn" data-tab="tab-contrast">Contrast analysis</button>
-    <button class="tab-btn" data-tab="tab-about">How it works</button>
-  </div>
-
-  <!-- CVD controls (shared between map + contrast tabs) -->
-  <div id="cvd-controls-wrapper">
-    <div class="cvd-controls" id="cvd-buttons"></div>
-
-    <!-- Severity slider: 0% = normal, 100% = full dichromacy -->
-    <div class="severity-row" id="severity-row">
-      <label for="severity-slider">Severity</label>
-      <input type="range" id="severity-slider" min="0" max="1" step="0.1" value="1" />
-      <span class="severity-value" id="severity-value">100%</span>
-    </div>
-
-    <div class="info-bar normal" id="info-bar"></div>
-  </div>
-
-  <!-- TAB 1: MAP SIMULATION -->
-  <div class="tab-panel active" id="tab-map">
-    <!--
-      THE KEY TECHNIQUE:
-      CSS filter: url(#cvd-filter) on this wrapper transforms
-      every pixel inside — tiles, lines, popups — simultaneously.
-      One CSS property, GPU-accelerated.
-    -->
-    <div class="map-wrapper" id="map-wrapper">
-      <div id="map"></div>
-    </div>
-    <div class="legend-box" id="legend"></div>
-  </div>
-
-  <!-- TAB 2: CONTRAST ANALYSIS -->
-  <div class="tab-panel" id="tab-contrast">
-    <p class="contrast-intro">
-      WCAG 2.1 contrast ratios between all line pairs, computed on the
-      simulated (post-CVD) colours. Ratios below 3:1 mean two lines are
-      effectively indistinguishable.
-    </p>
-    <div style="overflow-x:auto">
-      <table class="contrast-table" id="contrast-table"></table>
-    </div>
-    <div class="finding-box" id="finding-box"></div>
-  </div>
-
-  <!-- TAB 3: HOW IT WORKS -->
-  <div class="tab-panel" id="tab-about">
-    <div class="about">
-      <h2>The technology: SVG feColorMatrix</h2>
-      <p>
-        The simulation uses the SVG <code>&lt;feColorMatrix&gt;</code> element —
-        a filter primitive that multiplies every pixel's RGBA values by a 5×4
-        matrix. Applied to the map container via one CSS property:
-      </p>
-      <div class="code-block"><span class="c-cmt">/* Apply to the map container — everything inside transforms */</span>
-<span class="c-sel">.map-wrapper</span> { <span class="c-prop">filter</span>: url(<span class="c-val">#cvd-protanopia</span>); }
-
-<span class="c-cmt">&lt;!-- SVG filter definition --&gt;</span>
-<span class="c-tag">&lt;filter</span> id=<span class="c-val">"cvd-protanopia"</span><span class="c-tag">&gt;</span>
-  <span class="c-tag">&lt;feColorMatrix</span> type=<span class="c-val">"matrix"</span>
-    values=<span class="c-val">"0.152  1.053 -0.205 0 0
-            0.115  0.786  0.099 0 0
-           -0.004 -0.048  1.052 0 0
-            0      0      0     1 0"</span> /&gt;
-<span class="c-tag">&lt;/filter&gt;</span></div>
-
-      <h2>What the matrix does</h2>
-      <p>
-        Each row defines one output colour channel as a linear combination of
-        all input channels. For protanopia, the red output row
-        <code>[0.152, 1.053, -0.205]</code> means: "almost ignore red input,
-        heavily weight green, subtract some blue." This models the biological
-        reality that without L-cones, the brain reconstructs the missing
-        signal from M-cone and S-cone responses.
-      </p>
-
-      <h2>Severity interpolation</h2>
-      <p>
-        The severity slider interpolates between the identity matrix (normal
-        vision) and the full Machado matrix:<br>
-        <code>result[i] = identity[i] + severity × (full[i] - identity[i])</code><br>
-        This models anomalous trichromacy — reduced but not absent cone function,
-        which is more common than complete dichromacy.
-      </p>
-
-      <h2>Why this approach</h2>
-      <p>
-        The matrices come from Machado, Oliveira & Fernandes (2009), a
-        physiologically-based model published in IEEE TVCG. Unlike CSS hue-shifts,
-        these are derived from measured cone spectral sensitivities. The filter
-        is applied to the container, so lines, labels, legend, and basemap
-        all transform simultaneously and accurately.
-      </p>
-
-      <h2>Data sources</h2>
-      <div class="data-sources">
-        <div><strong>U-Bahn route geometries:</strong> data.gv.at (City of Vienna Open Data) — GeoJSON</div>
-        <div><strong>Tram route geometries:</strong> data.gv.at or Wiener Linien GTFS</div>
-        <div><strong>Official line colours:</strong> Wiener Linien brand guidelines — Hex codes</div>
-        <div><strong>Station locations:</strong> data.gv.at / OpenStreetMap — GeoJSON</div>
-        <div><strong>CVD simulation matrices:</strong> Machado, Oliveira & Fernandes (2009) — Published</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="footer">
-    Cartography &amp; Geoinformatics — TU Wien / TU Munich &middot;
-    Matrices: Machado, Oliveira &amp; Fernandes (2009), IEEE TVCG 15(6)
-  </div>
-</div>
-
-<!-- Leaflet JS — must load before our script -->
-<script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-  crossorigin=""
-></script>
-
-<script>
-// ==================================================================
-// 1. TRANSIT LINE DATA
-//
-//    Official Wiener Linien colours + simplified coordinates.
-//    Replace coords with real GeoJSON from data.gv.at in production.
-// ==================================================================
-
-var transitLines = [
-  {
-    id: "U1", color: "#E20210",
-    coords: [
-      [48.2583,16.4639],[48.2530,16.4500],[48.2480,16.4350],
-      [48.2400,16.4100],[48.2300,16.3950],[48.2150,16.3800],
-      [48.2050,16.3750],[48.1970,16.3680],[48.1850,16.3380]
-    ]
-  },
-  {
-    id: "U2", color: "#A862A4",
-    coords: [
-      [48.2330,16.4100],[48.2270,16.3980],[48.2200,16.3900],
-      [48.2150,16.3800],[48.2100,16.3700],[48.2050,16.3600],
-      [48.1930,16.3370]
-    ]
-  },
-  {
-    id: "U3", color: "#F39B02",
-    coords: [
-      [48.2430,16.3350],[48.2400,16.3400],[48.2350,16.3450],
-      [48.2280,16.3520],[48.2200,16.3550],[48.2080,16.3650],
-      [48.1980,16.3700],[48.1900,16.3780],[48.1850,16.3800]
-    ]
-  },
-  {
-    id: "U4", color: "#009540",
-    coords: [
-      [48.2500,16.3700],[48.2450,16.3660],[48.2380,16.3600],
-      [48.2300,16.3630],[48.2200,16.3650],[48.2050,16.3700],
-      [48.1950,16.3680],[48.1900,16.3650],[48.1780,16.3450]
-    ]
-  },
-  {
-    id: "U6", color: "#B1642E",
-    coords: [
-      [48.2600,16.3400],[48.2530,16.3450],[48.2450,16.3500],
-      [48.2370,16.3550],[48.2300,16.3580],[48.2150,16.3600],
-      [48.2050,16.3540],[48.2000,16.3500],[48.1830,16.3300]
-    ]
-  }
-];
-
-
-// ==================================================================
-// 2. CVD MATRICES — Machado, Oliveira & Fernandes (2009)
-//
-//    Each 3×3 matrix (flat array of 9) transforms RGB values:
-//      R_out = m[0]*R + m[1]*G + m[2]*B
-//      G_out = m[3]*R + m[4]*G + m[5]*B
-//      B_out = m[6]*R + m[7]*G + m[8]*B
-// ==================================================================
-
-var cvdTypes = {
-  normal: {
-    label: "Normal vision",
-    shortLabel: "Normal",
-    description: "Full trichromatic vision — all three cone types (L, M, S) functional.",
-    prevalence: null,
-    matrix: [1,0,0, 0,1,0, 0,0,1]
-  },
-  protanopia: {
-    label: "Protanopia",
-    shortLabel: "Protan",
-    description: "L-cones (red) absent. Reds collapse into browns. U1 and U4 become nearly indistinguishable.",
-    prevalence: "~1.3% of males",
-    matrix: [0.152286,1.052583,-0.204868, 0.114503,0.786281,0.099216, -0.003882,-0.048116,1.051998]
-  },
-  deuteranopia: {
-    label: "Deuteranopia",
-    shortLabel: "Deutan",
-    description: "M-cones (green) absent. Most common CVD. Similar red-green confusion, reds stay slightly brighter.",
-    prevalence: "~1.2% of males",
-    matrix: [0.367322,0.860646,-0.227968, 0.280085,0.672501,0.047413, -0.011820,0.042940,0.968881]
-  },
-  tritanopia: {
-    label: "Tritanopia",
-    shortLabel: "Tritan",
-    description: "S-cones (blue) absent. Blues shift to greens, yellows to pinks. Much rarer.",
-    prevalence: "~0.01% of population",
-    matrix: [1.255528,-0.076749,-0.178779, -0.078411,0.930809,0.147602, 0.004733,0.691367,0.303900]
-  }
-};
-
-
-// ==================================================================
-// 3. APPLICATION STATE
-// ==================================================================
-
-var activeCvd = "normal";
-var severity = 1.0;
-
-
-// ==================================================================
-// 4. COLOUR UTILITY FUNCTIONS
-// ==================================================================
-
-/** Parse "#RRGGBB" or "#RGB" to normalised [0..1] array */
-function hexToRgb(hex) {
-  var c = hex.replace("#", "");
-  if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
-  return [
-    parseInt(c.substring(0,2), 16) / 255,
-    parseInt(c.substring(2,4), 16) / 255,
-    parseInt(c.substring(4,6), 16) / 255
-  ];
-}
-
-/**
- * Interpolate between identity matrix and full CVD matrix.
- * result[i] = identity[i] + severity * (full[i] - identity[i])
- */
-function interpolateMatrix(fullMatrix, sev) {
-  var identity = [1,0,0, 0,1,0, 0,0,1];
-  var result = [];
-  for (var i = 0; i < 9; i++) {
-    result.push(identity[i] + sev * (fullMatrix[i] - identity[i]));
-  }
-  return result;
-}
-
-/**
- * Apply 3×3 matrix to hex colour → CSS rgb() string.
- * Same maths as the SVG filter, done in JS for legend swatches.
- */
-function simulateColor(hex, matrix) {
-  var rgb = hexToRgb(hex);
-  var r = rgb[0], g = rgb[1], b = rgb[2];
-
-  var rO = matrix[0]*r + matrix[1]*g + matrix[2]*b;
-  var gO = matrix[3]*r + matrix[4]*g + matrix[5]*b;
-  var bO = matrix[6]*r + matrix[7]*g + matrix[8]*b;
-
-  var clamp = function(v) { return Math.max(0, Math.min(1, v)); };
-  return "rgb(" + Math.round(clamp(rO)*255) + "," +
-                  Math.round(clamp(gO)*255) + "," +
-                  Math.round(clamp(bO)*255) + ")";
-}
-
-/** Convert 3×3 flat array to SVG feColorMatrix "values" (5×4) */
-function toSvgValues(m) {
-  return m[0]+" "+m[1]+" "+m[2]+" 0 0 "+
-         m[3]+" "+m[4]+" "+m[5]+" 0 0 "+
-         m[6]+" "+m[7]+" "+m[8]+" 0 0 "+
-         "0 0 0 1 0";
-}
-
-/** WCAG 2.1 relative luminance */
-function relLum(r, g, b) {
-  var lin = function(c) {
-    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-  };
-  return 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
-}
-
-/** Contrast ratio between two rgb() strings */
-function contrastRatio(rgb1, rgb2) {
-  var parse = function(s) {
-    var n = s.match(/\d+/g);
-    return [parseInt(n[0])/255, parseInt(n[1])/255, parseInt(n[2])/255];
-  };
-  var c1 = parse(rgb1), c2 = parse(rgb2);
-  var l1 = relLum(c1[0],c1[1],c1[2]);
-  var l2 = relLum(c2[0],c2[1],c2[2]);
-  var lighter = Math.max(l1,l2), darker = Math.min(l1,l2);
-  return (lighter + 0.05) / (darker + 0.05);
-}
-
-/** WCAG level from ratio */
-function wcagLevel(ratio) {
-  if (ratio >= 7)   return { level: "AAA",      pass: true };
-  if (ratio >= 4.5) return { level: "AA",       pass: true };
-  if (ratio >= 3)   return { level: "AA Large", pass: true };
-  return { level: "Fail", pass: false };
-}
-
-/** Current interpolated matrix */
-function getMatrix() {
-  return interpolateMatrix(cvdTypes[activeCvd].matrix, severity);
-}
-
-
-// ==================================================================
-// 5. INITIALISE LEAFLET MAP
-// ==================================================================
-
-var map = L.map("map", {
-  center: [48.2082, 16.3738],
-  zoom: 12,
-  zoomControl: true
-});
-
-// CartoDB Positron — light basemap that foregrounds coloured lines
-L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-  {
-    attribution: '&copy; <a href="https://osm.org/copyright">OSM</a> & <a href="https://carto.com/">CARTO</a>',
-    maxZoom: 18,
-    subdomains: "abcd"
-  }
-).addTo(map);
-
-// Draw transit lines.
-// Production replacement with real GeoJSON:
-//
-//   fetch("data/ubahn.geojson")
-//     .then(function(r) { return r.json(); })
-//     .then(function(data) {
-//       L.geoJSON(data, {
-//         style: function(f) {
-//           return { color: f.properties.color, weight: 5 };
-//         }
-//       }).addTo(map);
-//     });
-
-transitLines.forEach(function(line) {
-  L.polyline(line.coords, {
-    color: line.color,
-    weight: 5,
-    opacity: 0.9
-  })
-    .bindPopup("<strong style='font-size:14px'>" + line.id +
-               "</strong><br><span style='color:#666'>Original: " +
-               line.color + "</span>")
-    .addTo(map);
-});
-
-
-// ==================================================================
-// 6. BUILD CVD BUTTONS
-// ==================================================================
-
-var btnBox = document.getElementById("cvd-buttons");
-
-Object.keys(cvdTypes).forEach(function(key) {
-  var btn = document.createElement("button");
-  btn.className = "cvd-btn" + (key === "normal" ? " active" : "");
-  btn.textContent = cvdTypes[key].shortLabel;
-  btn.setAttribute("data-cvd", key);
-  btn.addEventListener("click", function() {
-    activeCvd = key;
-    updateAll();
-  });
-  btnBox.appendChild(btn);
-});
-
-
-// ==================================================================
-// 7. SEVERITY SLIDER
-// ==================================================================
-
-var slider = document.getElementById("severity-slider");
-var sevDisplay = document.getElementById("severity-value");
-
-slider.addEventListener("input", function() {
-  severity = parseFloat(this.value);
-  sevDisplay.textContent = Math.round(severity * 100) + "%";
-  updateAll();
-});
-
-
-// ==================================================================
-// 8. TAB SWITCHING
-// ==================================================================
-
-var tabBtns = document.querySelectorAll(".tab-btn");
-var panels = document.querySelectorAll(".tab-panel");
-var ctrlWrap = document.getElementById("cvd-controls-wrapper");
-
-tabBtns.forEach(function(btn) {
-  btn.addEventListener("click", function() {
-    var target = this.getAttribute("data-tab");
-
-    tabBtns.forEach(function(b) { b.classList.remove("active"); });
-    this.classList.add("active");
-
-    panels.forEach(function(p) {
-      p.classList.toggle("active", p.id === target);
-    });
-
-    // Hide controls on "about" tab
-    ctrlWrap.style.display = (target === "tab-about") ? "none" : "block";
-
-    // Leaflet needs resize when container becomes visible again
-    if (target === "tab-map") {
-      setTimeout(function() { map.invalidateSize(); }, 100);
-    }
-  });
-});
-
-
-// ==================================================================
-// 9. UPDATE FUNCTIONS
-// ==================================================================
-
-function updateAll() {
-  var matrix = getMatrix();
-
-  // Update SVG filter matrix values
-  document.getElementById("cvd-matrix")
-    .setAttribute("values", toSvgValues(matrix));
-
-  // Apply CSS filter to map wrapper
-  var wrapper = document.getElementById("map-wrapper");
-  wrapper.style.filter = activeCvd === "normal"
-    ? "none"
-    : "url(#cvd-filter)";   // ← THIS is the core technique
-
-  // Update button states
-  btnBox.querySelectorAll(".cvd-btn").forEach(function(b) {
-    b.classList.toggle("active", b.getAttribute("data-cvd") === activeCvd);
-  });
-
-  // Show/hide severity slider
-  document.getElementById("severity-row")
-    .classList.toggle("visible", activeCvd !== "normal");
-
-  updateInfoBar();
-  updateLegend();
-  updateContrastTable();
-}
-
-function updateInfoBar() {
-  var bar = document.getElementById("info-bar");
-  var info = cvdTypes[activeCvd];
-  bar.className = "info-bar " + (activeCvd === "normal" ? "normal" : "cvd");
-
-  var html = "<strong>" + info.label + ":</strong> " + info.description;
-  if (info.prevalence) {
-    html += ' <span class="prevalence">(Prevalence: ' + info.prevalence + ")</span>";
-  }
-  bar.innerHTML = html;
-}
-
-function updateLegend() {
-  var box = document.getElementById("legend");
-  var matrix = getMatrix();
-  var isNormal = (activeCvd === "normal");
-
-  var html = '<span class="legend-title">Legend (' +
-    (isNormal ? "original" : "simulated") + " colours)</span>";
-
-  transitLines.forEach(function(line) {
-    var sim = simulateColor(line.color, matrix);
-    html += '<div class="legend-item">';
-    html += '<div class="legend-swatch" style="background:' + line.color +
-            '" title="Original: ' + line.color + '"></div>';
-    if (!isNormal) {
-      html += '<span class="legend-arrow">→</span>';
-      html += '<div class="legend-swatch" style="background:' + sim +
-              '" title="Simulated: ' + sim + '"></div>';
-    }
-    html += "<span>" + line.id + "</span></div>";
-  });
-
-  box.innerHTML = html;
-}
-
-function updateContrastTable() {
-  var table = document.getElementById("contrast-table");
-  var matrix = getMatrix();
-
-  // Pre-compute simulated colours
-  var sims = transitLines.map(function(l) {
-    return simulateColor(l.color, matrix);
-  });
-
-  // Header
-  var html = "<thead><tr><th></th>";
-  transitLines.forEach(function(l, i) {
-    html += '<th><span class="inline-swatch" style="background:' +
-            sims[i] + '"></span>' + l.id + "</th>";
-  });
-  html += "</tr></thead><tbody>";
-
-  // Body — upper triangle only
-  transitLines.forEach(function(rowLine, ri) {
-    html += "<tr><td><span class='inline-swatch' style='background:" +
-            sims[ri] + "'></span><strong>" + rowLine.id + "</strong></td>";
-
-    transitLines.forEach(function(colLine, ci) {
-      if (ci <= ri) {
-        html += '<td class="cell-empty">' + (ci === ri ? "—" : "") + "</td>";
-      } else {
-        var ratio = contrastRatio(sims[ri], sims[ci]);
-        var w = wcagLevel(ratio);
-        html += '<td class="' + (w.pass ? "cell-pass" : "cell-fail") + '">';
-        html += '<div class="ratio-num">' + ratio.toFixed(1) + ":1</div>";
-        html += '<div class="' + (w.pass ? "wcag-pass" : "wcag-fail") + '">' +
-                w.level + "</div></td>";
-      }
-    });
-    html += "</tr>";
-  });
-  html += "</tbody>";
-  table.innerHTML = html;
-
-  // Finding box
-  document.getElementById("finding-box").innerHTML =
-    "<strong>Key finding:</strong> Under " + cvdTypes[activeCvd].label +
-    " at " + Math.round(severity * 100) + "% severity, line pairs with " +
-    "ratios below 3:1 are effectively indistinguishable and need non-colour " +
-    "differentiation (patterns, labels, or line-weight variation).";
-}
-
-
-// ==================================================================
-// 10. INITIAL RENDER
-// ==================================================================
-
-updateAll();
-</script>
-
+    <!-- ===== Navigation ===== -->
+    <nav class="nav" aria-label="Main navigation">
+        <a href="index.html" class="nav__logo">
+            <span class="nav__logo-bar" aria-hidden="true"></span>
+            Seeing the Lines
+        </a>
+        <button class="nav__toggle" aria-label="Toggle navigation menu">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="nav__links">
+            <li><a href="index.html" class="active">Home</a></li>
+            <li><a href="map.html">Map</a></li>
+            <li><a href="about-cvd.html">About CVD</a></li>
+            <li><a href="about.html">About</a></li>
+        </ul>
+    </nav>
+
+
+    <!-- ===== Hero Section ===== -->
+    <main>
+        <section class="hero" aria-label="Introduction">
+            <p class="hero__subtitle">Color Accessibility Study</p>
+            <h1 class="hero__title">Seeing the Lines</h1>
+
+            <!-- U-Bahn color swatches — visual identity element -->
+            <div class="hero__swatches" aria-hidden="true">
+                <div class="hero__swatch" style="background: #E20A17;"></div>
+                <div class="hero__swatch" style="background: #A762A5;"></div>
+                <div class="hero__swatch" style="background: #EF7C00;"></div>
+                <div class="hero__swatch" style="background: #00963F;"></div>
+                <div class="hero__swatch" style="background: #956734;"></div>
+            </div>
+
+            <p class="hero__description">
+                How does color vision deficiency affect the readability of 
+                Vienna's U-Bahn map? This interactive project simulates 
+                protanopia, deuteranopia, and tritanopia on a real map of the 
+                five U-Bahn lines — revealing which color pairs become 
+                indistinguishable and what that means for navigation.
+            </p>
+
+            <a href="map.html" class="hero__cta">
+                Explore the Map
+                <!-- Arrow icon (inline SVG for no external dependency) -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" 
+                     fill="none" stroke="currentColor" stroke-width="2" 
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+        </section>
+
+
+        <!-- ===== What This Project Shows ===== -->
+        <section class="page-content section" aria-label="Project overview">
+            <p class="section__label">Overview</p>
+            <h2 class="section__title">What This Project Shows</h2>
+
+            <div class="card-grid">
+                <!-- Card 1: CVD Simulation -->
+                <div class="card">
+                    <div class="card__icon" aria-hidden="true">🔬</div>
+                    <h3 class="card__title">CVD Simulation</h3>
+                    <p class="card__text">
+                        Using the Machado et al. (2009) physiologically-based model, 
+                        we apply SVG <code>&lt;feColorMatrix&gt;</code> filters to 
+                        transform the entire map canvas — simulating how a person 
+                        with color blindness sees the network.
+                    </p>
+                </div>
+
+                <!-- Card 2: Contrast Analysis -->
+                <div class="card">
+                    <div class="card__icon" aria-hidden="true">📊</div>
+                    <h3 class="card__title">Contrast Analysis</h3>
+                    <p class="card__text">
+                        The WCAG 2.2 contrast ratio is computed for every pair of 
+                        U-Bahn line colors under each simulation. This quantifies 
+                        which color pairs fail accessibility thresholds and by 
+                        how much.
+                    </p>
+                </div>
+
+                <!-- Card 3: Severity Control -->
+                <div class="card">
+                    <div class="card__icon" aria-hidden="true">🎚️</div>
+                    <h3 class="card__title">Adjustable Severity</h3>
+                    <p class="card__text">
+                        CVD exists on a spectrum. A severity slider interpolates 
+                        between normal vision and full cone absence, letting you 
+                        explore how partial deficiency affects line 
+                        distinguishability.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ===== The Vienna U-Bahn Network ===== -->
+        <section class="page-content section" aria-label="U-Bahn network">
+            <p class="section__label">The Network</p>
+            <h2 class="section__title">Vienna's Five U-Bahn Lines</h2>
+            <p>
+                Vienna's U-Bahn (underground railway) consists of five lines 
+                operated by Wiener Linien. Each line is identified by a distinct 
+                color — a design choice that works well for most people, but 
+                creates challenges for the approximately 8% of males and 0.5% 
+                of females with some form of color vision deficiency.
+            </p>
+
+            <div class="card-grid mt-lg">
+                <div class="card">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                        <span style="width:24px;height:24px;border-radius:4px;background:#E20A17;flex-shrink:0;"></span>
+                        <h3 class="card__title" style="margin:0;">U1</h3>
+                    </div>
+                    <p class="card__text">Oberlaa – Leopoldau. Runs north–south through the city center.</p>
+                </div>
+                <div class="card">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                        <span style="width:24px;height:24px;border-radius:4px;background:#A762A5;flex-shrink:0;"></span>
+                        <h3 class="card__title" style="margin:0;">U2</h3>
+                    </div>
+                    <p class="card__text">Schottentor – Seestadt. Serves the northeast and Donaustadt.</p>
+                </div>
+                <div class="card">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                        <span style="width:24px;height:24px;border-radius:4px;background:#EF7C00;flex-shrink:0;"></span>
+                        <h3 class="card__title" style="margin:0;">U3</h3>
+                    </div>
+                    <p class="card__text">Ottakring – Simmering. Crosses the city east–west through Stephansplatz.</p>
+                </div>
+                <div class="card">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                        <span style="width:24px;height:24px;border-radius:4px;background:#00963F;flex-shrink:0;"></span>
+                        <h3 class="card__title" style="margin:0;">U4</h3>
+                    </div>
+                    <p class="card__text">Hütteldorf – Heiligenstadt. Follows the Wien River and the Danube Canal.</p>
+                </div>
+                <div class="card">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                        <span style="width:24px;height:24px;border-radius:4px;background:#956734;flex-shrink:0;"></span>
+                        <h3 class="card__title" style="margin:0;">U6</h3>
+                    </div>
+                    <p class="card__text">Siebenhirten – Floridsdorf. The longest line, running along the Gürtel.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+        <p>
+            Seeing the Lines — A project by Michael Olanrewaju &amp; Aderonke Adetoro<br>
+            VU Web Mapping &amp; VU Multimedia Cartography 2026, TU Wien<br>
+            Data: <a href="https://www.data.gv.at/" target="_blank" rel="noopener">City of Vienna Open Data</a> · 
+            Map tiles: <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>
+        </p>
+    </footer>
+
+    <!-- Navigation toggle script -->
+    <script src="js/app.js"></script>
 </body>
 </html>

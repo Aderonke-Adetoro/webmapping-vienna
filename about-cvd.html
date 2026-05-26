@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About CVD — Seeing the Lines</title>
+    <meta name="description" content="Understanding color vision deficiency: types, causes, prevalence, and why it matters for map design.">
+
+    <!-- Google Fonts: Instrument Sans (display), Geist (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Project stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ===== Navigation ===== -->
+    <nav class="nav" aria-label="Main navigation">
+        <a href="index.html" class="nav__logo">
+            <span class="nav__logo-bar" aria-hidden="true"></span>
+            MapLens
+        </a>
+        <button class="nav__toggle" aria-label="Toggle navigation menu">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="nav__links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="map.html">Map</a></li>
+            <li><a href="about-cvd.html" class="active">About CVD</a></li>
+            <li><a href="about.html">About</a></li>
+        </ul>
+    </nav>
+
+
+    <!-- ===== Page Content ===== -->
+    <main class="page-content content-page">
+
+        <!-- Page Header -->
+        <p class="section__label">Background</p>
+        <h1 class="section__title">Understanding Color Vision Deficiency</h1>
+        <p>
+            Color vision deficiency (CVD), commonly called "color blindness,"
+            is a condition in which the eye's cone photoreceptors do not
+            respond to light wavelengths as expected. It is not a form of
+            blindness — people with CVD see a full range of brightness — but
+            certain colors that look distinct to a typical viewer may appear
+            similar or identical to someone with CVD.
+        </p>
+
+
+        <!-- ===== How Color Vision Works ===== -->
+        <h2>How Human Color Vision Works</h2>
+        <p>
+            The human retina contains three types of cone photoreceptors, each
+            sensitive to a different range of wavelengths:
+        </p>
+        <ul>
+            <li>
+                <strong>L-cones (Long-wavelength)</strong> — peak sensitivity
+                around 564 nm, responding most strongly to red–yellow light.
+            </li>
+            <li>
+                <strong>M-cones (Medium-wavelength)</strong> — peak sensitivity
+                around 534 nm, responding most strongly to green–yellow light.
+            </li>
+            <li>
+                <strong>S-cones (Short-wavelength)</strong> — peak sensitivity
+                around 420 nm, responding most strongly to blue–violet light.
+            </li>
+        </ul>
+        <p>
+            The brain interprets color by comparing the signals from all three
+            cone types. A person with typical trichromatic vision has all three
+            cone types functioning normally. When one cone type is absent or
+            has an altered spectral response, the brain receives a reduced set
+            of signals, resulting in a compressed or shifted color perception.
+        </p>
+
+
+        <!-- ===== Types of CVD ===== -->
+        <h2>Types of Color Vision Deficiency</h2>
+        <p>
+            CVD is classified by which cone type is affected and whether that
+            cone is absent (suffix <em>-anopia</em>) or has a shifted spectral
+            sensitivity (suffix <em>-anomaly</em>). This project simulates the
+            three complete-absence forms:
+        </p>
+
+        <h3>Protanopia (L-cone absent)</h3>
+        <p>
+            The long-wavelength cone is missing entirely. Red light produces
+            a much weaker signal, causing reds to appear dark and muddy, and
+            red–green distinctions to collapse. Protanopia affects
+            approximately 1.0% of males.
+        </p>
+        <p>
+            On the U-Bahn map, protanopia makes it particularly difficult to
+            distinguish U1 (red) from U4 (green), and U3 (orange) from U4
+            (green), since all three appear as similar yellowish-brown tones.
+        </p>
+
+        <h3>Deuteranopia (M-cone absent)</h3>
+        <p>
+            The medium-wavelength cone is missing. Like protanopia, this
+            causes red–green confusion, but with a different pattern because
+            the M-cone response curve differs from the L-cone. Deuteranopia
+            is the most common complete-absence form, affecting approximately
+            1.2% of males.
+        </p>
+        <p>
+            On the U-Bahn map, deuteranopia creates confusion between U1
+            (red), U3 (orange), U4 (green), and U6 (brown), as these all
+            shift towards similar ochre and khaki tones.
+        </p>
+
+        <h3>Tritanopia (S-cone absent)</h3>
+        <p>
+            The short-wavelength cone is missing. This is the rarest form,
+            affecting fewer than 0.01% of the population regardless of sex
+            (tritanopia is autosomal, not X-linked). It causes blue–yellow
+            confusion rather than red–green confusion.
+        </p>
+        <p>
+            On the U-Bahn map, tritanopia has less impact on line
+            distinguishability because the U-Bahn colors are mostly in the
+            red–green–orange range. However, the purple of U2 shifts towards
+            a pinkish-red, potentially creating confusion with U1 (red).
+        </p>
+
+
+        <!-- ===== Prevalence ===== -->
+        <h2>Prevalence</h2>
+        <p>
+            CVD is far more common than most people realise. Because the most
+            prevalent forms (protan and deutan) are X-linked recessive traits,
+            they disproportionately affect males, who have only one X
+            chromosome and therefore no backup copy of the gene.
+        </p>
+        <ul>
+            <li>
+                Approximately <strong>8% of males</strong> and <strong>0.5%
+                of females</strong> of Northern European descent have some
+                form of red–green CVD.
+            </li>
+            <li>
+                In Vienna (population ~2 million), this means roughly
+                <strong>80,000 male residents</strong> may experience some
+                degree of red–green color confusion when reading transit maps.
+            </li>
+            <li>
+                Tritanopia (blue–yellow) is autosomal and equally rare in
+                both sexes, affecting fewer than 1 in 10,000 people.
+            </li>
+        </ul>
+
+
+        <!-- ===== Why It Matters for Maps ===== -->
+        <h2>Why This Matters for Cartography</h2>
+        <p>
+            Transit maps are among the most widely used cartographic products
+            in daily life. Millions of people rely on them for wayfinding, and
+            color is the primary visual variable used to distinguish lines.
+            When a map's color scheme fails for a significant portion of the
+            population, it creates a real accessibility barrier — not an
+            abstract design concern.
+        </p>
+        <p>
+            Good cartographic practice requires considering color
+            accessibility at the design stage, not as an afterthought. This
+            means:
+        </p>
+        <ul>
+            <li>
+                Choosing color palettes that maintain sufficient contrast
+                under the most common CVD types (protan and deutan).
+            </li>
+            <li>
+                Providing redundant visual encoding — such as line patterns,
+                labels, or shape markers — so that color is not the sole
+                distinguishing variable.
+            </li>
+            <li>
+                Testing designs with simulation tools (like this project) to
+                identify problem areas before publication.
+            </li>
+        </ul>
+        <p>
+            The Web Content Accessibility Guidelines (WCAG) 2.2, specifically
+            Success Criterion 1.4.11 ("Non-text Contrast"), requires a
+            minimum contrast ratio of 3:1 between graphical elements that
+            convey information. Our interactive map computes this ratio for
+            every pair of U-Bahn line colors under each CVD simulation,
+            making the accessibility impact measurable rather than subjective.
+        </p>
+
+
+        <!-- ===== The Simulation Model ===== -->
+        <h2>The Simulation Model: Machado et al. (2009)</h2>
+        <p>
+            This project uses the color simulation matrices published by
+            Machado, Oliveira, and Fernandes in their 2009 paper
+            <em>"A Physiologically-Based Model for Simulation of Color Vision
+            Deficiency"</em> (IEEE Transactions on Visualization and Computer
+            Graphics, 15(6), 1291–1298).
+        </p>
+        <p>
+            Unlike earlier simulation methods that used simplified
+            heuristic transformations, the Machado model is grounded in the
+            physiology of the human visual system. It models the spectral
+            absorption characteristics of each cone type and derives 3×3
+            transformation matrices that convert an input RGB color to the
+            color a person with a specific CVD type would perceive.
+        </p>
+
+        <h3>How the Matrices Work</h3>
+        <p>
+            Each CVD type is represented by a 3×3 matrix. For a given input
+            color [R, G, B], the simulated color is computed as:
+        </p>
+        <p style="text-align: center; font-family: var(--font-mono); font-size: 0.95rem; padding: var(--space-md) 0;">
+            [R', G', B'] = M × [R, G, B]<sup>T</sup>
+        </p>
+        <p>
+            where M is the CVD-specific matrix. Because the transformation is
+            a linear matrix multiplication in RGB space, it can be applied
+            efficiently as an SVG <code>&lt;feColorMatrix&gt;</code> filter —
+            which is exactly what our interactive map does.
+        </p>
+
+        <h3>Severity Interpolation</h3>
+        <p>
+            CVD exists on a spectrum. Some people have a complete absence of
+            a cone type (e.g. protanopia), while others have an altered but
+            still functional cone (e.g. protanomaly). The severity slider in
+            our simulation interpolates between the identity matrix (normal
+            vision) and the full CVD matrix:
+        </p>
+        <p style="text-align: center; font-family: var(--font-mono); font-size: 0.95rem; padding: var(--space-md) 0;">
+            M(t) = (1 − t) × I + t × M<sub>CVD</sub>
+        </p>
+        <p>
+            where <em>t</em> ranges from 0 (normal vision) to 1 (full
+            dichromacy). This linear interpolation is an approximation —
+            the actual perceptual change is nonlinear — but it provides a
+            useful interactive tool for exploring how increasing deficiency
+            severity progressively reduces color discrimination.
+        </p>
+
+
+        <!-- ===== Call to Action ===== -->
+        <div style="text-align: center; padding: var(--space-2xl) 0;">
+            <a href="map.html" class="hero__cta">
+                Try the Simulation
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" 
+                     fill="none" stroke="currentColor" stroke-width="2" 
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+        </div>
+    </main>
+
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+        <p>
+            Seeing the Lines — A project by Michael Olanrewaju &amp; Aderonke Adetoro<br>
+            VU Web Mapping &amp; VU Multimedia Cartography 2026, TU Wien<br>
+            Data: <a href="https://www.data.gv.at/" target="_blank" rel="noopener">City of Vienna Open Data</a> · 
+            Map tiles: <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>
+        </p>
+    </footer>
+
+    <!-- Navigation toggle script -->
+    <script src="js/app.js"></script>
+</body>
+</html>
