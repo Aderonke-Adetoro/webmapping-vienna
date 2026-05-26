@@ -394,7 +394,7 @@ p {
 
 .sim-panel__logo-text {
     font-family: var(--font-body);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     line-height: 16px;
     color: #111419;
@@ -420,7 +420,7 @@ p {
 /* Body: 297×290px, border-top 1px #f9f9fa, padding 8 10 10 10, gap 16 */
 .sim-panel__body {
     background: #ffffff;
-    border-top: 1px solid #f9f9fa;
+    border-top: 1px solid #eeeeee;
     padding: 8px 10px 10px;
     display: flex;
     flex-direction: column;
