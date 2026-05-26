@@ -197,6 +197,11 @@ let currentSeverity = 1.0;
 function initMapPage() {
     /* ---------- MapLibre Setup ---------- */
 
+    const VIENNA_BOUNDS = [
+        [16.182, 48.118], // SW corner
+        [16.577, 48.323]  // NE corner
+    ];
+
     const map = new maplibregl.Map({
         container: 'map',
         style: 'vienna_transport_basemap.json',
@@ -204,6 +209,7 @@ function initMapPage() {
         zoom: INITIAL_ZOOM,
         minZoom: 10,
         maxZoom: 17,
+        maxBounds: VIENNA_BOUNDS,
         attributionControl: false
     });
 
