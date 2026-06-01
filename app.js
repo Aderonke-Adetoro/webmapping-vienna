@@ -153,11 +153,11 @@ function simulateColor(rgb, matrix) {
  * LINFO values from the GeoJSON map to line numbers.
  */
 const UBAHN_LINES = {
-    1: { name: 'U1', color: '#e20a17', label: 'Oberlaa – Leopoldau' },
-    2: { name: 'U2', color: '#a85fa5', label: 'Schottentor – Seestadt' },
+    1: { name: 'U1', color: '#e3000f', label: 'Oberlaa – Leopoldau' },
+    2: { name: 'U2', color: '#a862a4', label: 'Schottentor – Seestadt' },
     3: { name: 'U3', color: '#ef7c00', label: 'Ottakring – Simmering' },
     4: { name: 'U4', color: '#00963f', label: 'Hütteldorf – Heiligenstadt' },
-    6: { name: 'U6', color: '#956734', label: 'Siebenhirten – Floridsdorf' }
+    6: { name: 'U6', color: '#9d6830', label: 'Siebenhirten – Floridsdorf' }
 };
 
 /**
@@ -572,9 +572,9 @@ function initMapPage() {
 
     // Default: normal vision (no simulation)
     currentCVDType = 'normal';
-    currentSeverity = 0.5;
+    currentSeverity = 1.0;
     updateCVDInfoBox('normal');
-    updateLegend('normal', 0.5);
+    updateLegend('normal', 1.0);
     updateSliderVisibility('normal');
 }
 
