@@ -1,4 +1,4 @@
-# Seeing the Lines: Color Accessibility of Vienna's Transit Map 
+# MapLens: Color Accessibility of Vienna's Transit Map 
 Vienna's public transit map relies heavily on color to distinguish U-Bahn lines. This project investigates how effectively the map communicates to users with different types of color vision deficiency (CVD). We will build an interactive web map of Vienna's U-Bahn network using official color schemes, then provide real-time simulations of how the map appears under protanopia, deuteranopia, tritanopia, and/or achromatopsia. Users can toggle between vision types, compare the original and simulated views side by side, and see quantitative WCAG contrast scores for each line pair. The site will also include ground-truth comparisons with physical maps at Vienna transit stations, research on CVD and cartographic best practices, and examples of how other cities have addressed this challenge. 
 
 ## Site Structure 

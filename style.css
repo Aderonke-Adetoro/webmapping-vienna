@@ -594,7 +594,7 @@ input[type="range"]::-moz-range-thumb {
     cursor: pointer;
     border: 0.2px solid #747c90;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-    border: none;
+    /*border: none;*/
 }
 
 /* Percentage badge: 40×22px, bg #ebedf0, r=4, p=4 8, Geist 500 11px */

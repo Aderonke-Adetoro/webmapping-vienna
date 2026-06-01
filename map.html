@@ -30,7 +30,7 @@
         </defs>
     </svg>
 
-    <!-- ===== Navigation ===== -->
+    <!-- Navigation of map linked to home page -->
     <nav class="nav" aria-label="Main navigation">
         <a href="index.html" class="nav__logo">
             <span class="nav__logo-bar" aria-hidden="true"></span>
@@ -47,17 +47,17 @@
         </ul>
     </nav>
 
-    <!-- ===== Full-screen Map ===== -->
+    <!-- Full-screen Map  -->
     <div class="map-wrap">
         <div id="map"></div>
 
-        <!-- ===== Simulator Panel (top-left) — 297px wide ===== -->
+        <!-- Simulator Panel (top-left) — 297px wide -->
         <div class="sim-panel" id="simulator-card">
 
             <!-- Header: MapLens logo + collapse icon -->
             <div class="sim-panel__header">
                 <div class="sim-panel__logo">
-                    <span class="sim-panel__logo-text">Seeing the Lines</span>
+                    <span class="sim-panel__logo-text">Color Deficiency Simulation</span>
                 </div>
                 <button class="sim-panel__collapse" id="simulator-collapse" aria-label="Toggle panel"
                     aria-expanded="true">
@@ -108,9 +108,12 @@
                         <span>Very severe</span>
                     </div>
                     <div class="slider-row">
-                        <input type="range" id="severity-slider" min="0" max="100" value="50" step="5"
+                        <!--set max slider value and the initial value to be 100% i.e dichromacy
+                        step = 5 means every slider click close to current value goes 5% up or down 
+                        -->
+                        <input type="range" id="severity-slider" min="0" max="100" value="100" step="5"
                             aria-label="Simulation severity">
-                        <div class="severity-badge" id="severity-value">50%</div>
+                        <div class="severity-badge" id="severity-value">100%</div>
                     </div>
                 </div>
 
@@ -122,7 +125,7 @@
             </div>
         </div>
 
-        <!-- ===== Map controls (top-right) — Frame 20 ===== -->
+        <!--  Map controls (top-right) — Frame 20-->
         <div class="map-controls" id="map-controls">
             <!-- Sidebar toggle (top, fully rounded) -->
             <button class="map-ctrl map-ctrl--round" aria-label="Toggle sidebar" id="sidebar-toggle">
@@ -180,42 +183,42 @@
             </button>
         </div>
 
-        <!-- ===== Legend pill (bottom-center) ===== -->
+        <!-- Legend pill (bottom-center) -->
         <!-- Pattern: [orig square] — [sim square] Label (5 U-Bahn lines from GeoJSON) -->
         <div class="legend-bar legend-bar--normal" id="legend-bar">
 
             <div class="legend-bar__item">
-                <span class="legend-bar__orig" style="background:#e8383a;"></span>
+                <span class="legend-bar__orig" style="background:#e20a17;"></span>
                 <span class="legend-bar__line"></span>
-                <span class="legend-bar__sim" id="sim-swatch-U1" style="background:#e8383a;"></span>
+                <span class="legend-bar__sim" id="sim-swatch-U1" style="background:#e20a17;"></span>
                 <span class="legend-bar__name">U1</span>
             </div>
 
             <div class="legend-bar__item">
-                <span class="legend-bar__orig" style="background:#733e91;"></span>
+                <span class="legend-bar__orig" style="background:#a762a5;"></span>
                 <span class="legend-bar__line"></span>
-                <span class="legend-bar__sim" id="sim-swatch-U2" style="background:#733e91;"></span>
+                <span class="legend-bar__sim" id="sim-swatch-U2" style="background:#a762a5;"></span>
                 <span class="legend-bar__name">U2</span>
             </div>
 
             <div class="legend-bar__item">
-                <span class="legend-bar__orig" style="background:#f49719;"></span>
+                <span class="legend-bar__orig" style="background:#ef7c00;"></span>
                 <span class="legend-bar__line"></span>
-                <span class="legend-bar__sim" id="sim-swatch-U3" style="background:#f49719;"></span>
+                <span class="legend-bar__sim" id="sim-swatch-U3" style="background:#ef7c00;"></span>
                 <span class="legend-bar__name">U3</span>
             </div>
 
             <div class="legend-bar__item">
-                <span class="legend-bar__orig" style="background:#49ad32;"></span>
+                <span class="legend-bar__orig" style="background:#00963f;"></span>
                 <span class="legend-bar__line"></span>
-                <span class="legend-bar__sim" id="sim-swatch-U4" style="background:#49ad32;"></span>
+                <span class="legend-bar__sim" id="sim-swatch-U4" style="background:#00963f;"></span>
                 <span class="legend-bar__name">U4</span>
             </div>
 
             <div class="legend-bar__item">
-                <span class="legend-bar__orig" style="background:#9f3939;"></span>
+                <span class="legend-bar__orig" style="background:#956734;"></span>
                 <span class="legend-bar__line"></span>
-                <span class="legend-bar__sim" id="sim-swatch-U6" style="background:#9f3939;"></span>
+                <span class="legend-bar__sim" id="sim-swatch-U6" style="background:#956734;"></span>
                 <span class="legend-bar__name">U6</span>
             </div>
 
