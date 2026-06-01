@@ -191,7 +191,7 @@ const INITIAL_ZOOM = 12;
 
 /** Current simulation state — shared across control functions. */
 let currentCVDType = 'normal';
-let currentSeverity = 0.5;
+let currentSeverity = 1.0;
 
 /**
  * Initialize the map page: MapLibre instance, GeoJSON layers,
