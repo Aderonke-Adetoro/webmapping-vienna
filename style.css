@@ -696,6 +696,11 @@ input[type="range"]::-moz-range-thumb {
     border-radius: 0 !important;
 }
 
+/* Attribution: hide expanded text on page load, show only on click */
+.maplibregl-ctrl-attrib:not(.maplibregl-compact-show) .maplibregl-ctrl-attrib-inner {
+    display: none;
+}
+
 /* =====================================================
    LEGEND PILL  (bottom-center, Frame 33: 493×30px)
    bg #ffffff, r=8, p=8, gap=16, HORIZONTAL
