@@ -773,6 +773,10 @@ input[type="range"]::-moz-range-thumb {
 
 /* ---------- Content Pages ---------- */
 .content-page {
+    /* Unified reading column: paragraphs, lists and headings all share the
+       same width so every text line starts and ends at the same points.
+       for about and about-cvd */
+    max-width: 75ch;
     padding-top: var(--space-2xl);
     padding-bottom: var(--space-3xl);
 }
@@ -788,6 +792,9 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .content-page p {
+    /* Fill the unified column instead of the global 65ch paragraph cap 
+    paragraph fill the same clumn as lists/heading*/
+    max-width: none;
     margin-bottom: var(--space-md);
     color: var(--color-text-muted);
 }
