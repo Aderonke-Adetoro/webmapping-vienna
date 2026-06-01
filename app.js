@@ -76,15 +76,8 @@ function updateSVGFilter(cvdType, severity) {
     }
 }
 
-function applyFilterToMap(cvdType) {
-    const mapContainer = document.getElementById('map');
-    if (!mapContainer) return;
-
-    if (cvdType === 'normal') {
-        mapContainer.style.filter = 'none';
-    } else {
-        mapContainer.style.filter = 'url(#cvd-filter)';
-    }
+function applyFilterToMap() {
+    // No-op: simulation is applied per-layer via updateMapLayerColors
 }
 
 function hexToRgb(hex) {
@@ -123,16 +116,26 @@ function rgbToHex(rgb) {
  * @param {number[][]} matrix - 3×3 CVD transformation matrix
  * @returns {number[]} Simulated [R, G, B] array (0–255)
  */
+function srgbToLinear(c) {
+    c = c / 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+function linearToSrgb(c) {
+    c = Math.max(0, Math.min(1, c));
+    return Math.round((c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055) * 255);
+}
+
 function simulateColor(rgb, matrix) {
-    // Normalize to 0–1, multiply, scale back to 0–255
-    const r = rgb[0] / 255;
-    const g = rgb[1] / 255;
-    const b = rgb[2] / 255;
+    // Match SVG feColorMatrix linearRGB color space
+    const r = srgbToLinear(rgb[0]);
+    const g = srgbToLinear(rgb[1]);
+    const b = srgbToLinear(rgb[2]);
 
     return [
-        Math.round((matrix[0][0] * r + matrix[0][1] * g + matrix[0][2] * b) * 255),
-        Math.round((matrix[1][0] * r + matrix[1][1] * g + matrix[1][2] * b) * 255),
-        Math.round((matrix[2][0] * r + matrix[2][1] * g + matrix[2][2] * b) * 255)
+        linearToSrgb(matrix[0][0] * r + matrix[0][1] * g + matrix[0][2] * b),
+        linearToSrgb(matrix[1][0] * r + matrix[1][1] * g + matrix[1][2] * b),
+        linearToSrgb(matrix[2][0] * r + matrix[2][1] * g + matrix[2][2] * b)
     ];
 }
 
@@ -151,7 +154,7 @@ function simulateColor(rgb, matrix) {
  */
 const UBAHN_LINES = {
     1: { name: 'U1', color: '#e20a17', label: 'Oberlaa – Leopoldau' },
-    2: { name: 'U2', color: '#a762a5', label: 'Schottentor – Seestadt' },
+    2: { name: 'U2', color: '#a85fa5', label: 'Schottentor – Seestadt' },
     3: { name: 'U3', color: '#ef7c00', label: 'Ottakring – Simmering' },
     4: { name: 'U4', color: '#00963f', label: 'Hütteldorf – Heiligenstadt' },
     6: { name: 'U6', color: '#956734', label: 'Siebenhirten – Floridsdorf' }
@@ -188,7 +191,7 @@ const INITIAL_ZOOM = 12;
 
 /** Current simulation state — shared across control functions. */
 let currentCVDType = 'normal';
-let currentSeverity = 1.0;
+let currentSeverity = 0.5;
 
 /**
  * Initialize the map page: MapLibre instance, GeoJSON layers,
@@ -448,7 +451,7 @@ function initMapPage() {
 
                 slideToTab(activeBtn);
                 updateSVGFilter(currentCVDType, currentSeverity);
-                applyFilterToMap(currentCVDType);
+                updateMapLayerColors(currentCVDType, currentSeverity);
                 updateLegend(currentCVDType, currentSeverity);
                 updateCVDInfoBox(currentCVDType);
                 updateSliderVisibility(currentCVDType);
@@ -480,7 +483,7 @@ function initMapPage() {
             if (badge) badge.textContent = slider.value + '%';
             updateSliderTrack();
             updateSVGFilter(currentCVDType, currentSeverity);
-            applyFilterToMap(currentCVDType);
+            updateMapLayerColors(currentCVDType, currentSeverity);
             updateLegend(currentCVDType, currentSeverity);
         });
 
@@ -495,19 +498,25 @@ function initMapPage() {
         if (legendBar) legendBar.classList.toggle('legend-bar--normal', isNormal);
     }
 
+    function getSimulatedColor(line, cvdType, severity) {
+        if (cvdType === 'normal' || severity === 0) return line.color;
+        const matrix = interpolateMatrix(CVD_MATRICES[cvdType], severity);
+        return rgbToHex(simulateColor(hexToRgb(line.color), matrix));
+    }
+
+    function updateMapLayerColors(cvdType, severity) {
+        Object.entries(UBAHN_LINES).forEach(([, line]) => {
+            const simColor = getSimulatedColor(line, cvdType, severity);
+            if (map.getLayer(`ubahn-line-${line.name}`))
+                map.setPaintProperty(`ubahn-line-${line.name}`, 'line-color', simColor);
+        });
+    }
+
     function updateLegend(cvdType, severity) {
-        Object.entries(UBAHN_LINES).forEach(([linfo, line]) => {
+        Object.entries(UBAHN_LINES).forEach(([, line]) => {
             const simSwatch = document.getElementById(`sim-swatch-${line.name}`);
             if (!simSwatch) return;
-
-            if (cvdType === 'normal' || severity === 0) {
-                simSwatch.style.backgroundColor = line.color;
-            } else {
-                const originalRgb = hexToRgb(line.color);
-                const matrix = interpolateMatrix(CVD_MATRICES[cvdType], severity);
-                const simulatedRgb = simulateColor(originalRgb, matrix);
-                simSwatch.style.backgroundColor = rgbToHex(simulatedRgb);
-            }
+            simSwatch.style.backgroundColor = getSimulatedColor(line, cvdType, severity);
         });
     }
 
@@ -557,11 +566,9 @@ function initMapPage() {
 
     // Default: normal vision (no simulation)
     currentCVDType = 'normal';
-    currentSeverity = 1.0; // initial simulation upon load
-    updateSVGFilter('normal', 1.0);
-    applyFilterToMap('normal');
+    currentSeverity = 0.5;
     updateCVDInfoBox('normal');
-    updateLegend('normal', 1.0);
+    updateLegend('normal', 0.5);
     updateSliderVisibility('normal');
 }
 

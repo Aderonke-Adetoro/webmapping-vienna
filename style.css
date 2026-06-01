@@ -862,21 +862,51 @@ input[type="range"]::-moz-range-thumb {
         left: 8px;
         top: 8px;
         width: calc(100vw - 16px);
-        max-width: 297px;
+        max-width: 400px;
     }
 
     .map-controls {
-        top: 8px;
+        top: auto;
+        bottom: 80px;
         right: 8px;
     }
 
+    .maplibregl-ctrl-bottom-right {
+        bottom: 1px !important;
+        z-index: 500 !important;
+    }
+
+    .maplibregl-ctrl-attrib.maplibregl-compact-show {
+        z-index: 500 !important;
+    }
+
     .legend-bar {
-        bottom: 12px;
+        bottom: 16px;
+        z-index: 50;
         gap: 10px;
         padding: 7px 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-        max-width: calc(100vw - 32px);
+        flex-wrap: nowrap;
+        max-width: calc(100vw - 24px);
+        overflow: hidden;
+    }
+
+    .legend-bar__item {
+        gap: 3px;
+        flex-shrink: 1;
+    }
+
+    .legend-bar__orig,
+    .legend-bar__sim {
+        width: 12px;
+        height: 12px;
+    }
+
+    .legend-bar__line {
+        width: 7px;
+    }
+
+    .legend-bar__name {
+        font-size: 11px;
     }
 
     .hero {
