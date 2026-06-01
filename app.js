@@ -218,6 +218,12 @@ function initMapPage() {
 
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
+    // Start attribution collapsed — only expand on user click
+    map.once('idle', () => {
+        document.querySelector('.maplibregl-ctrl-attrib')
+            ?.classList.remove('maplibregl-compact-show');
+    });
+
 
     /* ---------- Load GeoJSON & Add Layers ---------- */
 
