@@ -1,4 +1,4 @@
-/* ---------- CSS Custom Properties (Design Tokens) ---------- */
+/* ---- CSS Custom Properties (Design Tokens) ---- */
 :root {
     /* Grayscale palette */
     --color-bg: #f5f5f5;
@@ -10,15 +10,15 @@
     --color-border-light: #e8e8e8;
 
     /* Official Wiener Linien U-Bahn colors */
-    --u1-color: #E20A17;
+    --u1-color: #E3000F;
     /* Red */
-    --u2-color: #A762A5;
+    --u2-color: #A862A4;
     /* Purple/Violet */
     --u3-color: #EF7C00;
     /* Orange */
     --u4-color: #00963F;
     /* Green */
-    --u6-color: #956734;
+    --u6-color: #9D6830;
     /* Brown */
 
     /* Typography */
@@ -45,7 +45,7 @@
 }
 
 
-/* ---------- Reset & Base ---------- */
+/* ---- Reset & Base ---- */
 *,
 *::before,
 *::after {
@@ -86,7 +86,7 @@ a:hover {
 }
 
 
-/* ---------- Typography ---------- */
+/* ---- Typography ---- */
 h1,
 h2,
 h3,
@@ -115,7 +115,7 @@ p {
 }
 
 
-/* ---------- Navigation ---------- */
+/* ---- Navigation ---- */
 .nav {
     position: fixed;
     top: 0;
@@ -204,7 +204,7 @@ p {
 }
 
 
-/* ---------- Page Layout ---------- */
+/* ---- Page Layout ---- */
 .page-content {
     margin-top: var(--nav-height);
     padding: var(--space-2xl) var(--space-lg);
@@ -214,7 +214,7 @@ p {
 }
 
 
-/* ---------- Hero Section (index.html) ---------- */
+/* ---- Hero Section (index.html) ---- */
 .hero {
     min-height: calc(100vh - var(--nav-height));
     display: flex;
@@ -289,7 +289,7 @@ p {
 }
 
 
-/* ---------- Section blocks ---------- */
+/* ---- Section blocks ---- */
 .section {
     margin-bottom: var(--space-3xl);
 }
@@ -309,7 +309,7 @@ p {
 }
 
 
-/* ---------- Card grid ---------- */
+/* ---- Card grid ---- */
 .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -348,7 +348,7 @@ p {
 }
 
 
-/* ---------- Map page ---------- */
+/* ---- Map page ---- */
 .map-body {
     overflow: hidden;
 }
@@ -366,9 +366,9 @@ p {
     height: 100%;
 }
 
-/* =====================================================
+/* 
    SIMULATOR PANEL  (top-left, 297×330px from Figma)
-   ===================================================== */
+*/
 .sim-panel {
     position: absolute;
     top: 14px;
@@ -544,7 +544,7 @@ p {
    Track: 220×12px — base #e2e4e8, active #02051f
    Knob: 12×12px white circle, border #747c90 0.2px
    Badge: 40×22px, bg #ebedf0, r=4, Geist 500 11px
-   ===================================================== */
+*/
 .slider-sublabels {
     display: flex;
     justify-content: space-between;
@@ -617,7 +617,7 @@ input[type="range"]::-moz-range-thumb {
    CVD INFO BOX  (277×80px, bg #f9f9fa, border 0.5px #dbdde3, r=8, p=8)
    Inter 500 12px, lh 16px, color #333b4a
    Title bold #111419
-   ===================================================== */
+*/
 .cvd-info-box {
     background: #f9f9fa;
     border: 0.5px solid #dbdde3;
@@ -640,7 +640,7 @@ input[type="range"]::-moz-range-thumb {
    Sidebar btn: 40×40, r=32 (full circle), white bg
    Zoom group: + top r=26.67 top only, − bottom no radius, border #dbdde3 0.6px
    Compass: 40×40, r=32 (full circle), white bg, gap=20 below zoom
-   ===================================================== */
+*/
 .map-controls {
     position: absolute;
     top: 16px;
@@ -706,7 +706,7 @@ input[type="range"]::-moz-range-thumb {
    bg #ffffff, r=8, p=8, gap=16, HORIZONTAL
    Each item: [orig 14×14 r=4] [1px divider #333b4a] [sim 14×14 r=4] [Geist 600 11px label]
    gap between swatches group and label: 4px
-   ===================================================== */
+*/
 .legend-bar {
     position: absolute;
     bottom: 20px;
@@ -771,7 +771,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 
-/* ---------- Content Pages ---------- */
+/* ---- Content Pages ---- */
 .content-page {
     /* Unified reading column: paragraphs, lists and headings all share the
        same width so every text line starts and ends at the same points.
@@ -825,7 +825,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 
-/* ---------- Footer ---------- */
+/* ---- Footer ---- */
 .footer {
     border-top: 1px solid var(--color-border-light);
     padding: var(--space-xl) var(--space-lg);
@@ -845,7 +845,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 
-/* ---------- Responsive Breakpoints ---------- */
+/* ---- Responsive Breakpoints ---- */
 
 @media (max-width: 600px) {
     .nav__toggle {
@@ -935,7 +935,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 
-/* ---------- Utility Classes ---------- */
+/* ---- Utility Classes ---- */
 .visually-hidden {
     position: absolute;
     width: 1px;

@@ -97,7 +97,7 @@ function hexToRgb(hex) {
 
 /**
  * Convert [R, G, B] (0–255) to a hex color string.
- * 
+  
  * @param {number[]} rgb - [R, G, B] array with values 0–255
  * @returns {string} Color in '#RRGGBB' format
  */
@@ -146,11 +146,11 @@ function simulateColor(rgb, matrix) {
    Only runs when a #map element exists (i.e. on map.html).
    Handles MapLibre init, GeoJSON loading, CVD controls,
    legend, contrast table, popups, and panel toggle.
-   ============================================================ */
+*/
 
 /**
  * Official Wiener Linien U-Bahn line colors.
- * LINFO values from the GeoJSON map to line numbers.
+  LINFO values from the GeoJSON map to line numbers.
  */
 const UBAHN_LINES = {
     1: { name: 'U1', color: '#e3000f', label: 'Oberlaa – Leopoldau' },
@@ -161,8 +161,8 @@ const UBAHN_LINES = {
 };
 
 /**
- * Descriptions of each CVD type, shown in the info box
- * when a user selects a simulation type.
+  Descriptions of each CVD type, shown in the info box
+  when a user selects a simulation type.
  */
 const CVD_DESCRIPTIONS = {
     protanopia: {
@@ -194,11 +194,11 @@ let currentCVDType = 'normal';
 let currentSeverity = 1.0;
 
 /**
- * Initialize the map page: MapLibre instance, GeoJSON layers,
- * all interactive controls. Only called when #map exists.
+  Initialize the map page: MapLibre instance, GeoJSON layers,
+  all interactive controls. Only called when #map exists.
  */
 function initMapPage() {
-    /* ---------- MapLibre Setup ---------- */
+    /* ---- MapLibre Setup ---- */
 
     const VIENNA_BOUNDS = [
         [16.182, 48.118], // SW corner
@@ -225,7 +225,7 @@ function initMapPage() {
     });
 
 
-    /* ---------- Load GeoJSON & Add Layers ---------- */
+    /* ---- Load GeoJSON & Add Layers ---- */
 
     map.on('load', function () {
         fetch('ubahn-line.json')
@@ -418,7 +418,7 @@ function initMapPage() {
     }
 
 
-    /* ---------- CVD Toggle Controls ---------- */
+    /* ---- CVD Toggle Controls ---- */
 
     function initCVDToggles() {
         const toggleButtons = document.querySelectorAll('.seg-tab');
@@ -539,7 +539,7 @@ function initMapPage() {
         }
     }
 
-    /* ---------- Panel collapse toggle ---------- */
+    /* ---- Panel collapse toggle ---- */
 
     function initPanelCollapse() {
         const button = document.getElementById('simulator-collapse');
@@ -551,7 +551,7 @@ function initMapPage() {
         });
     }
 
-    /* ---------- Custom map controls ---------- */
+    /* ---- Custom map controls ---- */
 
     function initMapControls(mapInstance) {
         document.getElementById('zoom-in')?.addEventListener('click', () => mapInstance.zoomIn());
@@ -563,7 +563,7 @@ function initMapPage() {
         });
     }
 
-    /* ---------- Wire Up ---------- */
+    /* ---- Wire Up ---- */
 
     initCVDToggles();
     initSeveritySlider();
@@ -585,7 +585,7 @@ function initMapPage() {
    Nav toggle runs on every page.
    Map page logic only runs when the #map container exists
    (i.e. only on map.html).
-   ============================================================ */
+*/
 
 document.addEventListener('DOMContentLoaded', () => {
     // Navigation — all pages
