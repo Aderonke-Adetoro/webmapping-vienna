@@ -336,6 +336,28 @@ function addUbahnLayers(map, geojson) {
 }
 
 /**
+ * In compare mode, mapbox-gl-compare clips each map's canvas at the
+ * divider and syncs their cameras together — so the canvas-center
+ * point isn't the center of what's actually visible on either side.
+ * Compute the flyTo `offset` needed so a clicked station lands in the
+ * middle of the visible slice for `mapInstance`, rather than behind
+ * the divider.
+ *
+ * @param {maplibregl.Map} mapInstance - The map whose station was clicked
+ * @returns {[number, number]} flyTo offset in pixels, [0, 0] outside compare mode
+ */
+function getCompareFlyOffset(mapInstance) {
+    if (!compareControl || !compareMap) return [0, 0];
+
+    const canvasWidth = mapInstance.getContainer().getBoundingClientRect().width;
+    const dividerX = compareControl.currentPosition ?? canvasWidth / 2;
+    const isLeftSide = mapInstance !== compareMap;
+
+    const sliceCenter = isLeftSide ? dividerX / 2 : (dividerX + canvasWidth) / 2;
+    return [sliceCenter - canvasWidth / 2, 0];
+}
+
+/**
  * Set up click handlers for station markers.
  * Shows a popup with station name, line, and opening year.
  *
@@ -382,6 +404,13 @@ function setupStationPopups(mapInstance) {
                 .setLngLat(e.lngLat)
                 .setHTML(content)
                 .addTo(mapInstance);
+
+            mapInstance.flyTo({
+                center: e.lngLat,
+                zoom: Math.max(mapInstance.getZoom(), 14),
+                duration: 800,
+                offset: getCompareFlyOffset(mapInstance)
+            });
         });
     });
 }
@@ -669,6 +698,7 @@ function initCompareMode(leftMap) {
             if (cachedGeojson) {
                 addUbahnLayers(compareMap, cachedGeojson);
                 updateMapLayerColors(compareMap, compareRight.type, compareRight.severity);
+                setupStationPopups(compareMap);
             }
             compareControl = new mapboxgl.Compare(leftMap, compareMap, '.map-wrap', {});
         });
@@ -686,6 +716,13 @@ function initCompareMode(leftMap) {
         toggleBtn.setAttribute('aria-pressed', 'true');
 
         ensureRightMap();
+
+        // Re-create the divider control if a previous exit removed it
+        // (compareMap itself is kept alive across toggles, so its 'load'
+        // event - where the control is normally created - won't fire again)
+        if (!compareControl && compareMap && compareMap.isStyleLoaded()) {
+            compareControl = new mapboxgl.Compare(leftMap, compareMap, '.map-wrap', {});
+        }
 
         // Start the Left Map from whatever the main simulator is showing
         syncLeftFromCurrent();
@@ -723,6 +760,11 @@ function initCompareMode(leftMap) {
         updateLegend(currentCVDType, currentSeverity);
         legendBar.classList.toggle('legend-bar--normal', currentCVDType === 'normal');
         legendBar.classList.remove('hidden');
+
+        // Drop the divider control so the left map goes back to a plain,
+        // unclipped, full-canvas-center flyTo target (see getCompareFlyOffset)
+        compareControl?.remove();
+        compareControl = null;
 
         requestAnimationFrame(() => leftMap.resize());
     }
