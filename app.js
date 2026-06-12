@@ -690,6 +690,10 @@ function initCompareMode(leftMap) {
         // Start the Left Map from whatever the main simulator is showing
         syncLeftFromCurrent();
 
+        // Re-sync the right tab pill now that the panel is visible
+        // (its initial position was computed while hidden, at zero width)
+        sideControls.right?.syncTabPosition();
+
         // Apply current compare settings to the left map and legend
         updateMapLayerColors(leftMap, compareLeft.type, compareLeft.severity);
         if (compareMap && compareMap.isStyleLoaded()) {
@@ -781,6 +785,9 @@ function initCompareMode(leftMap) {
                 slideToTab(activeBtn);
                 requestAnimationFrame(() => tabsContainer.style.removeProperty('--no-transition'));
             }
+
+            const sliderGroup = comparePanel.querySelector(`#severity-slider-${side}`)?.closest('.sim-group--severity');
+            if (sliderGroup) sliderGroup.style.display = cvdType === 'normal' ? 'none' : '';
         }
 
         toggleButtons.forEach(button => {
@@ -795,7 +802,12 @@ function initCompareMode(leftMap) {
             });
         });
 
-        sideControls[side] = Object.assign(sideControls[side] || {}, { setActiveTab });
+        sideControls[side] = Object.assign(sideControls[side] || {}, {
+            setActiveTab,
+            syncTabPosition() {
+                setActiveTab(getCompareState(side).type, { animate: false });
+            }
+        });
 
         requestAnimationFrame(() => {
             setActiveTab(getCompareState(side).type, { animate: false });
