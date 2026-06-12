@@ -16,6 +16,14 @@
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 
+    <link rel="stylesheet" href="https://unpkg.com/mapbox-gl-compare@0.4.2/dist/mapbox-gl-compare.css">
+    <script>
+        // mapbox-gl-compare attaches itself to window.mapboxgl — alias it to
+        // maplibregl so the plugin works with MapLibre instead of Mapbox GL.
+        window.mapboxgl = window.maplibregl;
+    </script>
+    <script src="https://unpkg.com/mapbox-gl-compare@0.4.2/dist/mapbox-gl-compare.js"></script>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -49,7 +57,8 @@
 
     <!-- Full-screen Map  -->
     <div class="map-wrap">
-        <div id="map"></div>
+        <div id="map-left"></div>
+        <div id="map-right"></div>
 
         <!-- Simulator Panel (top-left) — 297px wide -->
         <div class="sim-panel" id="simulator-card">
@@ -125,9 +134,116 @@
             </div>
         </div>
 
+        <!-- Comparison Slider Panel (top-left) — hidden until compare mode is toggled -->
+        <div class="sim-panel compare-panel hidden" id="compare-panel">
+
+            <!-- Header: MapLens logo + collapse icon -->
+            <div class="sim-panel__header">
+                <div class="sim-panel__logo">
+                    <span class="sim-panel__logo-text">Comparison Slider</span>
+                </div>
+                <button class="sim-panel__collapse" id="compare-collapse" aria-label="Toggle panel"
+                    aria-expanded="true">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g clip-path="url(#clip0_2056_374_compare)">
+                            <path d="M5.5 3V13" stroke="#404446" stroke-linecap="round" stroke-linejoin="round" />
+                            <path
+                                d="M13.5 3H2.5C2.22386 3 2 3.22386 2 3.5V12.5C2 12.7761 2.22386 13 2.5 13H13.5C13.7761 13 14 12.7761 14 12.5V3.5C14 3.22386 13.7761 3 13.5 3Z"
+                                stroke="#404446" stroke-linecap="round" stroke-linejoin="round" />
+                        </g>
+                        <defs>
+                            <clipPath id="clip0_2056_374_compare">
+                                <rect width="16" height="16" fill="white" />
+                            </clipPath>
+                        </defs>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Body (collapsible) -->
+            <div class="sim-panel__body" id="compare-body">
+
+                <!-- Left map controls -->
+                <div class="sim-group">
+                    <p class="sim-label">Deficiency type <span class="compare-side-label">Left Map</span></p>
+                    <div class="seg-tabs" role="radiogroup" aria-label="Select deficiency type for left map" data-compare-side="left">
+                        <button class="seg-tab active" data-cvd-type="normal" role="radio" aria-checked="true">Normal</button>
+                        <span class="seg-divider"></span>
+                        <button class="seg-tab" data-cvd-type="protanopia" role="radio" aria-checked="false">Protan</button>
+                        <span class="seg-divider"></span>
+                        <button class="seg-tab" data-cvd-type="deuteranopia" role="radio" aria-checked="false">Deutan</button>
+                        <span class="seg-divider"></span>
+                        <button class="seg-tab" data-cvd-type="tritanopia" role="radio" aria-checked="false">Tritan</button>
+                    </div>
+                </div>
+
+                <div class="sim-group sim-group--severity">
+                    <p class="sim-label">Severity</p>
+                    <div class="slider-sublabels">
+                        <span>Less&nbsp;&nbsp;severe</span>
+                        <span>Very severe</span>
+                    </div>
+                    <div class="slider-row">
+                        <input type="range" id="severity-slider-left" min="0" max="100" value="100" step="5"
+                            aria-label="Left map simulation severity">
+                        <div class="severity-badge" id="severity-value-left">100%</div>
+                    </div>
+                </div>
+
+                <!-- Right map controls -->
+                <div class="sim-group">
+                    <p class="sim-label">Deficiency type <span class="compare-side-label">Right Map</span></p>
+                    <div class="seg-tabs" role="radiogroup" aria-label="Select deficiency type for right map" data-compare-side="right">
+                        <button class="seg-tab active" data-cvd-type="normal" role="radio" aria-checked="true">Normal</button>
+                        <span class="seg-divider"></span>
+                        <button class="seg-tab" data-cvd-type="protanopia" role="radio" aria-checked="false">Protan</button>
+                        <span class="seg-divider"></span>
+                        <button class="seg-tab" data-cvd-type="deuteranopia" role="radio" aria-checked="false">Deutan</button>
+                        <span class="seg-divider"></span>
+                        <button class="seg-tab" data-cvd-type="tritanopia" role="radio" aria-checked="false">Tritan</button>
+                    </div>
+                </div>
+
+                <div class="sim-group sim-group--severity">
+                    <p class="sim-label">Severity</p>
+                    <div class="slider-sublabels">
+                        <span>Less&nbsp;&nbsp;severe</span>
+                        <span>Very severe</span>
+                    </div>
+                    <div class="slider-row">
+                        <input type="range" id="severity-slider-right" min="0" max="100" value="100" step="5"
+                            aria-label="Right map simulation severity">
+                        <div class="severity-badge" id="severity-value-right">100%</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
         <!--  Map controls (top-right) — Frame 20-->
         <div class="map-controls" id="map-controls">
-            <!-- Sidebar toggle (top, fully rounded) -->
+            <!-- Compare slider toggle (top, fully rounded) -->
+            <button class="map-ctrl map-ctrl--round" aria-label="Toggle comparison slider" id="compare-toggle"
+                aria-pressed="false">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip0_2040_compare)">
+                        <path d="M10 3.75V16.25" stroke="#333B4A" stroke-width="1.25" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path
+                            d="M16.875 3.75H3.125C2.77982 3.75 2.5 4.02982 2.5 4.375V15.625C2.5 15.9702 2.77982 16.25 3.125 16.25H16.875C17.2202 16.25 17.5 15.9702 17.5 15.625V4.375C17.5 4.02982 17.2202 3.75 16.875 3.75Z"
+                            stroke="#333B4A" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M3.125 3.75H7.5V16.25H3.125C2.77982 16.25 2.5 15.9702 2.5 15.625V4.375C2.5 4.02982 2.77982 3.75 3.125 3.75Z"
+                            fill="#333B4A" fill-opacity="0.12" />
+                    </g>
+                    <defs>
+                        <clipPath id="clip0_2040_compare">
+                            <rect width="20" height="20" fill="white" />
+                        </clipPath>
+                    </defs>
+                </svg>
+            </button>
+
+            <!-- Sidebar toggle (fully rounded) -->
             <button class="map-ctrl map-ctrl--round" aria-label="Toggle sidebar" id="sidebar-toggle">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g clip-path="url(#clip0_2056_308)">
@@ -218,6 +334,47 @@
                 <span class="legend-bar__orig" style="background:#9d6830;"></span>
                 <span class="legend-bar__line"></span>
                 <span class="legend-bar__sim" id="sim-swatch-U6" style="background:#9d6830;"></span>
+                <span class="legend-bar__name">U6</span>
+            </div>
+
+        </div>
+
+        <!-- Compare legend pill (bottom-center) — shown only in compare mode -->
+        <!-- Pattern: [left-sim square] -> [right-sim square] Label (5 U-Bahn lines) -->
+        <div class="legend-bar compare-legend hidden" id="compare-legend-bar">
+
+            <div class="legend-bar__item">
+                <span class="legend-bar__orig" id="compare-swatch-left-U1" style="background:#e3000f;"></span>
+                <span class="legend-bar__line"></span>
+                <span class="legend-bar__sim" id="compare-swatch-right-U1" style="background:#e3000f;"></span>
+                <span class="legend-bar__name">U1</span>
+            </div>
+
+            <div class="legend-bar__item">
+                <span class="legend-bar__orig" id="compare-swatch-left-U2" style="background:#a862a4;"></span>
+                <span class="legend-bar__line"></span>
+                <span class="legend-bar__sim" id="compare-swatch-right-U2" style="background:#a862a4;"></span>
+                <span class="legend-bar__name">U2</span>
+            </div>
+
+            <div class="legend-bar__item">
+                <span class="legend-bar__orig" id="compare-swatch-left-U3" style="background:#ef7c00;"></span>
+                <span class="legend-bar__line"></span>
+                <span class="legend-bar__sim" id="compare-swatch-right-U3" style="background:#ef7c00;"></span>
+                <span class="legend-bar__name">U3</span>
+            </div>
+
+            <div class="legend-bar__item">
+                <span class="legend-bar__orig" id="compare-swatch-left-U4" style="background:#00963f;"></span>
+                <span class="legend-bar__line"></span>
+                <span class="legend-bar__sim" id="compare-swatch-right-U4" style="background:#00963f;"></span>
+                <span class="legend-bar__name">U4</span>
+            </div>
+
+            <div class="legend-bar__item">
+                <span class="legend-bar__orig" id="compare-swatch-left-U6" style="background:#9d6830;"></span>
+                <span class="legend-bar__line"></span>
+                <span class="legend-bar__sim" id="compare-swatch-right-U6" style="background:#9d6830;"></span>
                 <span class="legend-bar__name">U6</span>
             </div>
 

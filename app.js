@@ -189,9 +189,246 @@ const CVD_DESCRIPTIONS = {
 const VIENNA_CENTER = [16.373, 48.208];
 const INITIAL_ZOOM = 12;
 
+const VIENNA_BOUNDS = [
+    [16.182, 48.118], // SW corner
+    [16.577, 48.323]  // NE corner
+];
+
 /** Current simulation state — shared across control functions. */
 let currentCVDType = 'normal';
 let currentSeverity = 1.0;
+
+/** Compare-mode state — left/right map deficiency settings. */
+let compareLeft = { type: 'normal', severity: 1.0 };
+let compareRight = { type: 'normal', severity: 1.0 };
+let compareMap = null;
+let compareControl = null;
+let cachedGeojson = null;
+
+/**
+ * Add the U-Bahn route, station, and label layers to a MapLibre map.
+ * Reused for both the primary map and the compare-mode map.
+ *
+ * @param {maplibregl.Map} map - The MapLibre map to add layers to
+ * @param {object} geojson - The U-Bahn GeoJSON feature collection
+ */
+function addUbahnLayers(map, geojson) {
+    // DATA NOTE: 1 feature has LINFO=null (Lina-Loos-Platz,
+    // planned U2 Nord station). Filtered out via layer filters
+    // below — only features matching known LINFO values render.
+
+    map.addSource('ubahn', {
+        type: 'geojson',
+        data: geojson
+    });
+
+    // Route line layers (one per U-Bahn line)
+    Object.entries(UBAHN_LINES).forEach(([linfo, line]) => {
+        // White outline for visual depth
+        map.addLayer({
+            id: `ubahn-outline-${line.name}`,
+            type: 'line',
+            source: 'ubahn',
+            filter: [
+                'all',
+                ['==', '$type', 'LineString'],
+                ['==', 'LINFO', parseInt(linfo)]
+            ],
+            layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            paint: {
+                'line-color': '#ffffff',
+                'line-width': [
+                    'interpolate', ['linear'], ['zoom'],
+                    10, 4,
+                    15, 8
+                ],
+                'line-opacity': 0.6
+            }
+        });
+
+        // Colored line
+        map.addLayer({
+            id: `ubahn-line-${line.name}`,
+            type: 'line',
+            source: 'ubahn',
+            filter: [
+                'all',
+                ['==', '$type', 'LineString'],
+                ['==', 'LINFO', parseInt(linfo)]
+            ],
+            layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            paint: {
+                'line-color': line.color,
+                'line-width': [
+                    'interpolate', ['linear'], ['zoom'],
+                    10, 2.5,
+                    15, 8
+                ]
+            }
+        });
+    });
+
+    // Station circle layers
+    Object.entries(UBAHN_LINES).forEach(([linfo, line]) => {
+        map.addLayer({
+            id: `ubahn-station-${line.name}`,
+            type: 'circle',
+            source: 'ubahn',
+            filter: [
+                'all',
+                ['==', '$type', 'Point'],
+                ['==', 'LINFO', parseInt(linfo)],
+                ['has', 'HTXT']
+            ],
+            paint: {
+                'circle-radius': [
+                    'interpolate', ['linear'], ['zoom'],
+                    10, 2,
+                    14, 5,
+                    16, 7
+                ],
+                'circle-color': '#ffffff',
+                'circle-stroke-color': '#131313',
+                'circle-stroke-width': [
+                    'interpolate', ['linear'], ['zoom'],
+                    10, 1,
+                    14, 3
+                ]
+            }
+        });
+    });
+
+    // Station name labels (visible at higher zoom)
+    map.addLayer({
+        id: 'ubahn-station-labels',
+        type: 'symbol',
+        source: 'ubahn',
+        filter: [
+            'all',
+            ['==', '$type', 'Point'],
+            ['has', 'HTXT']
+        ],
+        minzoom: 13,
+        layout: {
+            'text-field': ['get', 'HTXT'],
+            'text-font': ['Open Sans Regular'],
+            'text-size': [
+                'interpolate', ['linear'], ['zoom'],
+                13, 9,
+                16, 12
+            ],
+            'text-offset': [0, 1.4],
+            'text-anchor': 'top',
+            'text-max-width': 8
+        },
+        paint: {
+            'text-color': '#333333',
+            'text-halo-color': '#ffffff',
+            'text-halo-width': 1.5
+        }
+    });
+}
+
+/**
+ * Set up click handlers for station markers.
+ * Shows a popup with station name, line, and opening year.
+ *
+ * @param {maplibregl.Map} mapInstance - The MapLibre map
+ */
+function setupStationPopups(mapInstance) {
+    const stationLayers = Object.values(UBAHN_LINES).map(
+        line => `ubahn-station-${line.name}`
+    );
+
+    stationLayers.forEach(layerId => {
+        // Pointer cursor on hover
+        mapInstance.on('mouseenter', layerId, () => {
+            mapInstance.getCanvas().style.cursor = 'pointer';
+        });
+        mapInstance.on('mouseleave', layerId, () => {
+            mapInstance.getCanvas().style.cursor = '';
+        });
+
+        // Popup on click
+        mapInstance.on('click', layerId, (e) => {
+            const props = e.features[0].properties;
+            const lineInfo = UBAHN_LINES[props.LINFO];
+
+            const content = `
+                <div style="font-family: 'DM Sans', sans-serif; padding: 4px;">
+                    <strong style="font-size: 0.95rem;">${props.HTXT}</strong>
+                    <div style="font-size: 0.82rem; color: #666; margin-top: 4px;">
+                        <span style="
+                            display: inline-block;
+                            width: 10px; height: 10px;
+                            border-radius: 2px;
+                            background: ${lineInfo ? lineInfo.color : '#999'};
+                            margin-right: 4px;
+                            vertical-align: middle;
+                        "></span>
+                        ${lineInfo ? lineInfo.name : 'U-Bahn'}
+                        ${props.EROEFFNUNG_JAHR ? ` · Opened ${props.EROEFFNUNG_JAHR}` : ''}
+                    </div>
+                </div>
+            `;
+
+            new maplibregl.Popup({ offset: 10, closeButton: false })
+                .setLngLat(e.lngLat)
+                .setHTML(content)
+                .addTo(mapInstance);
+        });
+    });
+}
+
+/**
+ * Compute the simulated color for a U-Bahn line under a given CVD type/severity.
+ *
+ * @param {object} line - Entry from UBAHN_LINES (has a `color` hex string)
+ * @param {string} cvdType - 'normal' | 'protanopia' | 'deuteranopia' | 'tritanopia'
+ * @param {number} severity - 0–1
+ * @returns {string} Simulated color in '#RRGGBB' format
+ */
+function getSimulatedColor(line, cvdType, severity) {
+    if (cvdType === 'normal' || severity === 0) return line.color;
+    const matrix = interpolateMatrix(CVD_MATRICES[cvdType], severity);
+    return rgbToHex(simulateColor(hexToRgb(line.color), matrix));
+}
+
+/**
+ * Recolor the U-Bahn route layers on a map to simulate a CVD type/severity.
+ *
+ * @param {maplibregl.Map} map - The MapLibre map whose layers to recolor
+ * @param {string} cvdType - 'normal' | 'protanopia' | 'deuteranopia' | 'tritanopia'
+ * @param {number} severity - 0–1
+ */
+function updateMapLayerColors(map, cvdType, severity) {
+    Object.entries(UBAHN_LINES).forEach(([, line]) => {
+        const simColor = getSimulatedColor(line, cvdType, severity);
+        if (map.getLayer(`ubahn-line-${line.name}`))
+            map.setPaintProperty(`ubahn-line-${line.name}`, 'line-color', simColor);
+    });
+}
+
+/**
+ * Update the single-map legend swatches to reflect the current
+ * simulated colors for each U-Bahn line.
+ *
+ * @param {string} cvdType - 'normal' | 'protanopia' | 'deuteranopia' | 'tritanopia'
+ * @param {number} severity - 0–1
+ */
+function updateLegend(cvdType, severity) {
+    Object.entries(UBAHN_LINES).forEach(([, line]) => {
+        const simSwatch = document.getElementById(`sim-swatch-${line.name}`);
+        if (!simSwatch) return;
+        simSwatch.style.backgroundColor = getSimulatedColor(line, cvdType, severity);
+    });
+}
 
 /**
   Initialize the map page: MapLibre instance, GeoJSON layers,
@@ -200,13 +437,8 @@ let currentSeverity = 1.0;
 function initMapPage() {
     /* ---- MapLibre Setup ---- */
 
-    const VIENNA_BOUNDS = [
-        [16.182, 48.118], // SW corner
-        [16.577, 48.323]  // NE corner
-    ];
-
     const map = new maplibregl.Map({
-        container: 'map',
+        container: 'map-left',
         style: 'vienna_transport_basemap.json',
         center: VIENNA_CENTER,
         zoom: INITIAL_ZOOM,
@@ -231,126 +463,9 @@ function initMapPage() {
         fetch('ubahn-line.json')
             .then(response => response.json())
             .then(geojson => {
-                // DATA NOTE: 1 feature has LINFO=null (Lina-Loos-Platz,
-                // planned U2 Nord station). Filtered out via layer filters
-                // below — only features matching known LINFO values render.
+                cachedGeojson = geojson;
 
-                map.addSource('ubahn', {
-                    type: 'geojson',
-                    data: geojson
-                });
-
-                // Route line layers (one per U-Bahn line)
-                Object.entries(UBAHN_LINES).forEach(([linfo, line]) => {
-                    // White outline for visual depth
-                    map.addLayer({
-                        id: `ubahn-outline-${line.name}`,
-                        type: 'line',
-                        source: 'ubahn',
-                        filter: [
-                            'all',
-                            ['==', '$type', 'LineString'],
-                            ['==', 'LINFO', parseInt(linfo)]
-                        ],
-                        layout: {
-                            'line-join': 'round',
-                            'line-cap': 'round'
-                        },
-                        paint: {
-                            'line-color': '#ffffff',
-                            'line-width': [
-                                'interpolate', ['linear'], ['zoom'],
-                                10, 4,
-                                15, 8
-                            ],
-                            'line-opacity': 0.6
-                        }
-                    });
-
-                    // Colored line
-                    map.addLayer({
-                        id: `ubahn-line-${line.name}`,
-                        type: 'line',
-                        source: 'ubahn',
-                        filter: [
-                            'all',
-                            ['==', '$type', 'LineString'],
-                            ['==', 'LINFO', parseInt(linfo)]
-                        ],
-                        layout: {
-                            'line-join': 'round',
-                            'line-cap': 'round'
-                        },
-                        paint: {
-                            'line-color': line.color,
-                            'line-width': [
-                                'interpolate', ['linear'], ['zoom'],
-                                10, 2.5,
-                                15, 8
-                            ]
-                        }
-                    });
-                });
-
-                // Station circle layers
-                Object.entries(UBAHN_LINES).forEach(([linfo, line]) => {
-                    map.addLayer({
-                        id: `ubahn-station-${line.name}`,
-                        type: 'circle',
-                        source: 'ubahn',
-                        filter: [
-                            'all',
-                            ['==', '$type', 'Point'],
-                            ['==', 'LINFO', parseInt(linfo)],
-                            ['has', 'HTXT']
-                        ],
-                        paint: {
-                            'circle-radius': [
-                                'interpolate', ['linear'], ['zoom'],
-                                10, 2,
-                                14, 5,
-                                16, 7
-                            ],
-                            'circle-color': '#ffffff',
-                            'circle-stroke-color': '#131313',
-                            'circle-stroke-width': [
-                                'interpolate', ['linear'], ['zoom'],
-                                10, 1,
-                                14, 3
-                            ]
-                        }
-                    });
-                });
-
-                // Station name labels (visible at higher zoom)
-                map.addLayer({
-                    id: 'ubahn-station-labels',
-                    type: 'symbol',
-                    source: 'ubahn',
-                    filter: [
-                        'all',
-                        ['==', '$type', 'Point'],
-                        ['has', 'HTXT']
-                    ],
-                    minzoom: 13,
-                    layout: {
-                        'text-field': ['get', 'HTXT'],
-                        'text-font': ['Open Sans Regular'],
-                        'text-size': [
-                            'interpolate', ['linear'], ['zoom'],
-                            13, 9,
-                            16, 12
-                        ],
-                        'text-offset': [0, 1.4],
-                        'text-anchor': 'top',
-                        'text-max-width': 8
-                    },
-                    paint: {
-                        'text-color': '#333333',
-                        'text-halo-color': '#ffffff',
-                        'text-halo-width': 1.5
-                    }
-                });
+                addUbahnLayers(map, geojson);
 
                 // Set up station click popups
                 setupStationPopups(map);
@@ -364,65 +479,13 @@ function initMapPage() {
     });
 
 
-    /* ---------- Station Popups ---------- */
-
-    /**
-     * Set up click handlers for station markers.
-     * Shows a popup with station name, line, and opening year.
-     * 
-     * @param {maplibregl.Map} mapInstance - The MapLibre map
-     */
-    function setupStationPopups(mapInstance) {
-        const stationLayers = Object.values(UBAHN_LINES).map(
-            line => `ubahn-station-${line.name}`
-        );
-
-        stationLayers.forEach(layerId => {
-            // Pointer cursor on hover
-            mapInstance.on('mouseenter', layerId, () => {
-                mapInstance.getCanvas().style.cursor = 'pointer';
-            });
-            mapInstance.on('mouseleave', layerId, () => {
-                mapInstance.getCanvas().style.cursor = '';
-            });
-
-            // Popup on click
-            mapInstance.on('click', layerId, (e) => {
-                const props = e.features[0].properties;
-                const lineInfo = UBAHN_LINES[props.LINFO];
-
-                const content = `
-                    <div style="font-family: 'DM Sans', sans-serif; padding: 4px;">
-                        <strong style="font-size: 0.95rem;">${props.HTXT}</strong>
-                        <div style="font-size: 0.82rem; color: #666; margin-top: 4px;">
-                            <span style="
-                                display: inline-block;
-                                width: 10px; height: 10px;
-                                border-radius: 2px;
-                                background: ${lineInfo ? lineInfo.color : '#999'};
-                                margin-right: 4px;
-                                vertical-align: middle;
-                            "></span>
-                            ${lineInfo ? lineInfo.name : 'U-Bahn'}
-                            ${props.EROEFFNUNG_JAHR ? ` · Opened ${props.EROEFFNUNG_JAHR}` : ''}
-                        </div>
-                    </div>
-                `;
-
-                new maplibregl.Popup({ offset: 10, closeButton: false })
-                    .setLngLat(e.lngLat)
-                    .setHTML(content)
-                    .addTo(mapInstance);
-            });
-        });
-    }
-
-
     /* ---- CVD Toggle Controls ---- */
 
     function initCVDToggles() {
-        const toggleButtons = document.querySelectorAll('.seg-tab');
-        const tabsContainer = document.querySelector('.seg-tabs');
+        const tabsContainer = document.querySelector('#simulator-card .seg-tabs');
+        const toggleButtons = tabsContainer
+            ? tabsContainer.querySelectorAll('.seg-tab')
+            : [];
 
         function slideToTab(activeBtn) {
             if (!tabsContainer || !activeBtn) return;
@@ -448,7 +511,7 @@ function initMapPage() {
                 });
 
                 const activeBtn = currentCVDType === 'normal'
-                    ? document.querySelector('[data-cvd-type="normal"]')
+                    ? tabsContainer.querySelector('[data-cvd-type="normal"]')
                     : button;
                 if (activeBtn) {
                     activeBtn.classList.add('active');
@@ -457,7 +520,7 @@ function initMapPage() {
 
                 slideToTab(activeBtn);
                 updateSVGFilter(currentCVDType, currentSeverity);
-                updateMapLayerColors(currentCVDType, currentSeverity);
+                updateMapLayerColors(map, currentCVDType, currentSeverity);
                 updateLegend(currentCVDType, currentSeverity);
                 updateCVDInfoBox(currentCVDType);
                 updateSliderVisibility(currentCVDType);
@@ -465,7 +528,7 @@ function initMapPage() {
         });
 
         // Position pill on load without animating from 0
-        const initialActive = document.querySelector('.seg-tab.active');
+        const initialActive = tabsContainer?.querySelector('.seg-tab.active');
         requestAnimationFrame(() => {
             if (tabsContainer) tabsContainer.style.setProperty('--no-transition', '1');
             slideToTab(initialActive);
@@ -489,7 +552,7 @@ function initMapPage() {
             if (badge) badge.textContent = slider.value + '%';
             updateSliderTrack();
             updateSVGFilter(currentCVDType, currentSeverity);
-            updateMapLayerColors(currentCVDType, currentSeverity);
+            updateMapLayerColors(map, currentCVDType, currentSeverity);
             updateLegend(currentCVDType, currentSeverity);
         });
 
@@ -497,33 +560,11 @@ function initMapPage() {
     }
 
     function updateSliderVisibility(cvdType) {
-        const sliderGroup = document.querySelector('.sim-group--severity');
+        const sliderGroup = document.querySelector('#simulator-card .sim-group--severity');
         const legendBar = document.getElementById('legend-bar');
         const isNormal = cvdType === 'normal';
         if (sliderGroup) sliderGroup.style.display = isNormal ? 'none' : '';
         if (legendBar) legendBar.classList.toggle('legend-bar--normal', isNormal);
-    }
-
-    function getSimulatedColor(line, cvdType, severity) {
-        if (cvdType === 'normal' || severity === 0) return line.color;
-        const matrix = interpolateMatrix(CVD_MATRICES[cvdType], severity);
-        return rgbToHex(simulateColor(hexToRgb(line.color), matrix));
-    }
-
-    function updateMapLayerColors(cvdType, severity) {
-        Object.entries(UBAHN_LINES).forEach(([, line]) => {
-            const simColor = getSimulatedColor(line, cvdType, severity);
-            if (map.getLayer(`ubahn-line-${line.name}`))
-                map.setPaintProperty(`ubahn-line-${line.name}`, 'line-color', simColor);
-        });
-    }
-
-    function updateLegend(cvdType, severity) {
-        Object.entries(UBAHN_LINES).forEach(([, line]) => {
-            const simSwatch = document.getElementById(`sim-swatch-${line.name}`);
-            if (!simSwatch) return;
-            simSwatch.style.backgroundColor = getSimulatedColor(line, cvdType, severity);
-        });
     }
 
     function updateCVDInfoBox(cvdType) {
@@ -541,9 +582,9 @@ function initMapPage() {
 
     /* ---- Panel collapse toggle ---- */
 
-    function initPanelCollapse() {
-        const button = document.getElementById('simulator-collapse');
-        const bodyEl = document.getElementById('simulator-body');
+    function initPanelCollapse(collapseBtnId, bodyId) {
+        const button = document.getElementById(collapseBtnId);
+        const bodyEl = document.getElementById(bodyId);
         if (!button || !bodyEl) return;
         button.addEventListener('click', () => {
             const collapsed = bodyEl.classList.toggle('hidden');
@@ -567,8 +608,10 @@ function initMapPage() {
 
     initCVDToggles();
     initSeveritySlider();
-    initPanelCollapse();
+    initPanelCollapse('simulator-collapse', 'simulator-body');
+    initPanelCollapse('compare-collapse', 'compare-body');
     initMapControls(map);
+    initCompareMode(map);
 
     // Default: normal vision (no simulation)
     currentCVDType = 'normal';
@@ -576,6 +619,245 @@ function initMapPage() {
     updateCVDInfoBox('normal');
     updateLegend('normal', 1.0);
     updateSliderVisibility('normal');
+}
+
+/* ============================================================
+   SECTION 4: COMPARISON SLIDER (compare mode)
+
+   Toggled via the compare-toggle button in map-controls.
+   Mounts a second MapLibre instance (#map-right) with its own
+   CVD simulation settings and a draggable mapbox-gl-compare
+   divider between it and the primary map.
+*/
+
+/**
+ * Initialize the comparison slider: toggle button, second map
+ * instance, dual deficiency/severity controls, and shared legend.
+ *
+ * @param {maplibregl.Map} leftMap - The primary (left) map instance
+ */
+function initCompareMode(leftMap) {
+    const toggleBtn = document.getElementById('compare-toggle');
+    const comparePanel = document.getElementById('compare-panel');
+    const simulatorCard = document.getElementById('simulator-card');
+    const legendBar = document.getElementById('legend-bar');
+    const compareLegendBar = document.getElementById('compare-legend-bar');
+    const mapWrap = document.querySelector('.map-wrap');
+    const rightContainer = document.getElementById('map-right');
+
+    if (!toggleBtn || !comparePanel || !rightContainer) return;
+
+    let isCompareMode = false;
+
+    function ensureRightMap() {
+        if (compareMap) return;
+
+        compareMap = new maplibregl.Map({
+            container: 'map-right',
+            style: 'vienna_transport_basemap.json',
+            center: leftMap.getCenter(),
+            zoom: leftMap.getZoom(),
+            bearing: leftMap.getBearing(),
+            pitch: leftMap.getPitch(),
+            minZoom: 9,
+            maxZoom: 17,
+            maxBounds: VIENNA_BOUNDS,
+            attributionControl: false
+        });
+
+        compareMap.on('load', () => {
+            if (cachedGeojson) {
+                addUbahnLayers(compareMap, cachedGeojson);
+                updateMapLayerColors(compareMap, compareRight.type, compareRight.severity);
+            }
+            compareControl = new mapboxgl.Compare(leftMap, compareMap, '.map-wrap', {});
+        });
+    }
+
+    function enterCompareMode() {
+        isCompareMode = true;
+        mapWrap.classList.add('compare-active');
+        rightContainer.classList.add('visible');
+        comparePanel.classList.remove('hidden');
+        simulatorCard.classList.add('hidden');
+        legendBar.classList.add('hidden');
+        compareLegendBar.classList.remove('hidden');
+        toggleBtn.classList.add('active');
+        toggleBtn.setAttribute('aria-pressed', 'true');
+
+        ensureRightMap();
+
+        // Start the Left Map from whatever the main simulator is showing
+        syncLeftFromCurrent();
+
+        // Apply current compare settings to the left map and legend
+        updateMapLayerColors(leftMap, compareLeft.type, compareLeft.severity);
+        if (compareMap && compareMap.isStyleLoaded()) {
+            updateMapLayerColors(compareMap, compareRight.type, compareRight.severity);
+        }
+        updateCompareLegend();
+
+        requestAnimationFrame(() => {
+            leftMap.resize();
+            compareMap?.resize();
+            compareControl?._onResize?.();
+        });
+    }
+
+    function exitCompareMode() {
+        isCompareMode = false;
+        mapWrap.classList.remove('compare-active');
+        rightContainer.classList.remove('visible');
+        comparePanel.classList.add('hidden');
+        simulatorCard.classList.remove('hidden');
+        compareLegendBar.classList.add('hidden');
+        toggleBtn.classList.remove('active');
+        toggleBtn.setAttribute('aria-pressed', 'false');
+
+        // Restore the single-map simulation colors/legend
+        updateMapLayerColors(leftMap, currentCVDType, currentSeverity);
+        updateLegend(currentCVDType, currentSeverity);
+        legendBar.classList.toggle('legend-bar--normal', currentCVDType === 'normal');
+        legendBar.classList.remove('hidden');
+
+        requestAnimationFrame(() => leftMap.resize());
+    }
+
+    toggleBtn.addEventListener('click', () => {
+        if (isCompareMode) {
+            exitCompareMode();
+        } else {
+            enterCompareMode();
+        }
+    });
+
+    /* ---- Dual deficiency-type / severity controls ---- */
+
+    function getCompareState(side) {
+        return side === 'left' ? compareLeft : compareRight;
+    }
+
+    function applySideUpdate(side) {
+        const state = getCompareState(side);
+        const targetMap = side === 'left' ? leftMap : compareMap;
+        if (targetMap && targetMap.isStyleLoaded?.()) {
+            updateMapLayerColors(targetMap, state.type, state.severity);
+        }
+        updateCompareLegend();
+    }
+
+    // side -> { setActiveTab(cvdType), syncSlider() }
+    const sideControls = {};
+
+    comparePanel.querySelectorAll('.seg-tabs[data-compare-side]').forEach(tabsContainer => {
+        const side = tabsContainer.dataset.compareSide;
+        const toggleButtons = tabsContainer.querySelectorAll('.seg-tab');
+
+        function slideToTab(activeBtn) {
+            if (!activeBtn) return;
+            const containerRect = tabsContainer.getBoundingClientRect();
+            const btnRect = activeBtn.getBoundingClientRect();
+            tabsContainer.style.setProperty('--tab-width', btnRect.width + 'px');
+            tabsContainer.style.setProperty('--tab-offset', (btnRect.left - containerRect.left - 2) + 'px');
+        }
+
+        function setActiveTab(cvdType, { animate = true } = {}) {
+            toggleButtons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-checked', 'false');
+            });
+
+            const activeBtn = tabsContainer.querySelector(`[data-cvd-type="${cvdType}"]`)
+                || tabsContainer.querySelector('[data-cvd-type="normal"]');
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.setAttribute('aria-checked', 'true');
+            }
+
+            if (animate) {
+                slideToTab(activeBtn);
+            } else {
+                tabsContainer.style.setProperty('--no-transition', '1');
+                slideToTab(activeBtn);
+                requestAnimationFrame(() => tabsContainer.style.removeProperty('--no-transition'));
+            }
+        }
+
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const cvdType = button.dataset.cvdType;
+                const state = getCompareState(side);
+
+                state.type = (cvdType === state.type && cvdType !== 'normal') ? 'normal' : cvdType;
+
+                setActiveTab(state.type);
+                applySideUpdate(side);
+            });
+        });
+
+        sideControls[side] = Object.assign(sideControls[side] || {}, { setActiveTab });
+
+        requestAnimationFrame(() => {
+            setActiveTab(getCompareState(side).type, { animate: false });
+        });
+    });
+
+    /* ---- Dual severity sliders ---- */
+
+    [
+        { id: 'severity-slider-left', badgeId: 'severity-value-left', side: 'left' },
+        { id: 'severity-slider-right', badgeId: 'severity-value-right', side: 'right' }
+    ].forEach(({ id, badgeId, side }) => {
+        const slider = document.getElementById(id);
+        const badge = document.getElementById(badgeId);
+        if (!slider) return;
+
+        function updateSliderTrack() {
+            const pct = slider.value + '%';
+            slider.style.background = `linear-gradient(to right, #02051f ${pct}, #e2e4e8 ${pct})`;
+        }
+
+        function syncSlider() {
+            const pct = Math.round(getCompareState(side).severity * 100);
+            slider.value = pct;
+            if (badge) badge.textContent = pct + '%';
+            updateSliderTrack();
+        }
+
+        slider.addEventListener('input', () => {
+            getCompareState(side).severity = parseInt(slider.value) / 100;
+            if (badge) badge.textContent = slider.value + '%';
+            updateSliderTrack();
+            applySideUpdate(side);
+        });
+
+        sideControls[side] = Object.assign(sideControls[side] || {}, { syncSlider });
+
+        updateSliderTrack();
+    });
+
+    /**
+     * Sync the "Left Map" compare controls (tabs + severity slider) to
+     * whatever deficiency/severity is currently active in the main
+     * simulator, so the comparison opens from the user's current view.
+     */
+    function syncLeftFromCurrent() {
+        compareLeft.type = currentCVDType;
+        compareLeft.severity = currentSeverity;
+        sideControls.left?.setActiveTab(compareLeft.type, { animate: false });
+        sideControls.left?.syncSlider();
+    }
+
+    /* ---- Combined legend (left-sim -> right-sim per line) ---- */
+
+    function updateCompareLegend() {
+        Object.entries(UBAHN_LINES).forEach(([, line]) => {
+            const leftSwatch = document.getElementById(`compare-swatch-left-${line.name}`);
+            const rightSwatch = document.getElementById(`compare-swatch-right-${line.name}`);
+            if (leftSwatch) leftSwatch.style.backgroundColor = getSimulatedColor(line, compareLeft.type, compareLeft.severity);
+            if (rightSwatch) rightSwatch.style.backgroundColor = getSimulatedColor(line, compareRight.type, compareRight.severity);
+        });
+    }
 }
 
 
@@ -592,7 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initNavToggle();
 
     // Map page — only when MapLibre map container is present
-    if (document.getElementById('map')) {
+    if (document.getElementById('map-left')) {
         initMapPage();
     }
 });
